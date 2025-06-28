@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import Logo from "public/assets/images/logo-devlinks-large.svg";
 
-import { ErrorIcon } from "@/components/error-icon";
+import { ErrorIcon } from "@/components/icons/error-icon";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
