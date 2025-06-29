@@ -7,9 +7,13 @@ import { revalidateTag } from "next/cache";
 import { config } from "@/lib/config";
 import connectToDatabase from "@/lib/db";
 import { normalizeURL } from "@/lib/utils";
-import { Link, LinkDocument, PlatformKey, PlatformNames } from "@/lib/types";
-import { getOrCreateTempSession, getUserFromSession } from "@/app/(auth)/_lib/session";
 import { TEST_GUEST_LINK_EXPIRE_TIME } from "@/lib/constants";
+import { Link, LinkDocument, PlatformKey, PlatformNames } from "@/lib/types";
+import {
+  getGuestSessionId,
+  getOrCreateGuestSession,
+  getUserFromSession,
+} from "@/app/(auth)/_lib/session";
 
 export async function createNewLink() {
   const { db } = await connectToDatabase();
@@ -18,7 +22,7 @@ export async function createNewLink() {
   // Check if user is logged in
   const user = await getUserFromSession();
   const userId = user?.id;
-  const guestSessionId = userId ? undefined : await getOrCreateTempSession();
+  const guestSessionId = userId ? undefined : await getOrCreateGuestSession();
 
   try {
     const query = userId ? { userId } : { guestSessionId, userId: { $exists: false } };
@@ -150,14 +154,12 @@ export async function updateLinkForm(formData: FormData) {
   const user = await getUserFromSession();
   const userId = user?.id;
 
-  console.log("user session Id:", userId);
   let query = {};
   if (userId) {
     query = { userId };
   } else {
     const cookieStore = await cookies();
     const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
-    console.log("Guest session Id:", guestSessionId);
     if (guestSessionId) {
       query = { guestSessionId, userId: { $exists: false } };
     } else {
@@ -241,10 +243,8 @@ export async function updateLinkForm(formData: FormData) {
 }
 
 // Function to transfer temporary links to a registered user account
-// This function should be called after user registration or login
 export async function transferGuestLinksToUser(userId: string) {
-  const cookieStore = await cookies();
-  const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
+  const guestSessionId = await getGuestSessionId();
 
   if (!guestSessionId) return;
 
