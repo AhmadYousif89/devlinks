@@ -53,9 +53,17 @@ A modern, full-stack link-sharing platform built with Next.js, allowing users to
 
    ```env
    MONGODB_URI=your_mongodb_connection_string
+   MONGODB_NAME=your_mongodb_database_name
    CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
    CLOUDINARY_API_KEY=your_cloudinary_api_key
    CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   USER_SESSION_KEY=your_user_session_key
+   CURRENT_USER_KEY=your_current_user_key
+   GUEST_SESSION_KEY=your_guest_session_key
+   SESSION_EXPIRE_TIME=your_session_expire_time
+   GUEST_LINK_EXPIRE_TIME=your_guest_link_expire_time
+   GUEST_SESSION_EXPIRE_TIME=your_guest_session_expire_time
+   EXPIRED_NOTIFICATION_TIME=your_expired_notification_time
    ```
 
 4. **Run the development server**
@@ -72,54 +80,68 @@ A modern, full-stack link-sharing platform built with Next.js, allowing users to
 ```
 devlinks/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── (auth)/            # Authentication pages
-│   │   │   ├── signin/        # Sign in page
-│   │   │   ├── signup/        # Sign up page
-│   │   │   └── _components/   # Auth-specific components
-│   │   ├── (main)/            # Main application
-│   │   │   ├── @addLinks/     # Parallel route for link management
-│   │   │   ├── @profileDetails/ # Parallel route for profile
-│   │   │   ├── @sidePanel/    # Parallel route for side panel
-│   │   │   ├── actions/       # Server actions
-│   │   │   ├── components/    # Page-specific components
-│   │   │   └── skeletons/     # Loading skeletons
-│   │   ├── preview/           # Profile preview page
-│   │   └── globals.css        # Global styles
-│   ├── components/            # Reusable components
-│   │   ├── ui/               # Shadcn UI components (buttons, inputs, etc.)
-│   │   ├── layout/           # General Layout components
-│   │   └── icons/            # Custom icons components
-│   └── lib/                  # Utilities and configurations
-│       ├── db.ts            # Database connection
-│       ├── utils.ts         # Utility functions
-│       ├── types.ts         # Type definitions
-│       └── constants.ts     # App constants
+│   ├── app/                        # Next.js App Router
+│   │   ├── (auth)/                 # Authentication pages
+│   │   │   ├── signin/             # Sign in page
+│   │   │   ├── signup/             # Sign up page
+│   │   │   └── _components/        # Auth-specific components
+│   │   ├── (main)/                 # Main application
+│   │   │   ├── @addLinks/          # Parallel route for link management
+│   │   │   ├── @profileDetails/    # Parallel route for profile
+│   │   │   ├── @sidePanel/         # Parallel route for side panel
+│   │   │   ├── actions/            # Server actions
+│   │   │   ├── components/         # Page-specific components
+│   │   │   └── skeletons/          # Loading skeletons
+│   │   ├── preview/                # Profile preview page
+│   │   └── globals.css             # Global styles
+│   ├── components/                 # Reusable components
+│   │   ├── ui/                     # Shadcn UI components (buttons, inputs, etc.)
+│   │   ├── layout/                 # General Layout components
+│   │   └── icons/                  # Custom icons components
+│   └── lib/                        # Utilities and configurations
+│       ├── db.ts                   # Database connection
+│       ├── utils.ts                # Utility functions
+│       ├── types.ts                # Type definitions
+│       └── constants.ts            # App constants
 ├── public/
-│   └── assets/              # Static assets
-│       ├── images/          # SVG icons and images
-│       └── fonts/           # Custom fonts
-└── components.json          # Shadcn/ui configuration
+│   ├── assets/                     # Static assets
+│       ├── images/                 # SVG icons and images
+│       └── fonts/                  # Custom fonts
+|   └── screenshots/                # Screenshots of the app
+└── components.json                 # Shadcn/ui configuration
 ```
 
-## 📱 Supported Platforms
+## 📱 Pictures
 
-DevLinks supports validation and icons for popular developer platforms:
+**Sign In / Sign Up**
 
-- GitHub
-- LinkedIn
-- Twitter
-- Frontend Mentor
-- GitLab
-- YouTube
-- Facebook
-- Twitch
-- CodePen
-- Codewars
-- FreeCodeCamp
-- HashNode
-- Stack Overflow
-- And more...
+<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
+  <img src="./public/screenshots/signin.png" alt="Sign In" width="25%" />
+  <img src="./public/screenshots/signup.png" alt="Sign Up" width="25%" />
+</div>
+
+**Desktop / Links / Profile / Preview**
+
+<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
+  <img src="./public/screenshots/links.png" alt="Links" width="25%" />
+  <img src="./public/screenshots/profile.png" alt="Profile" width="25%" />
+  <img src="./public/screenshots/preview.png" alt="Preview" width="25%" />
+</div>
+
+**Desktop Active**
+
+<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
+    <img src="./public/screenshots/active-links.png" alt="Links" width="25%" />
+  <img src="./public/screenshots/active-profile.png" alt="Profile" width="25%" />
+</div>
+
+**Mobile Active**
+
+<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
+  <img src="./public/screenshots/active-links-mobile.png" alt="Links" width="25%" />
+  <img src="./public/screenshots/active-profile-mobile.png" alt="Profile" width="25%" />
+  <img src="./public/screenshots/active-preview-mobile.png" alt="Profile" width="25%" />
+</div>
 
 ## 🎯 Usage
 
