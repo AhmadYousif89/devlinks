@@ -69,6 +69,12 @@ export type UserProfileDisplay = {
   registered: boolean;
 };
 
+export type PublicUserProfile = {
+  username: string;
+  displayEmail: string;
+  image: string;
+};
+
 export type SessionExpirationDocument = {
   _id?: ObjectId;
   userId: string;
@@ -83,20 +89,3 @@ type ExtractPlatformNames<T> = {
 
 export type PlatformKey = keyof typeof LINKS_DATA;
 export type PlatformNames = ExtractPlatformNames<typeof LINKS_DATA>;
-
-export type ProfileServerState = {
-  success: boolean;
-  message: string;
-  errors?: {
-    firstName?: string[] | undefined;
-    lastName?: string[] | undefined;
-    displayEmail?: string[] | undefined;
-    profileImage?: string[] | undefined;
-  };
-  data?: {
-    firstName?: string;
-    lastName?: string;
-    displayEmail?: string;
-    profileImage?: string | File;
-  };
-};

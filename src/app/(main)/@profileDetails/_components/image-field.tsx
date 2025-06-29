@@ -2,14 +2,16 @@ import Image from "next/image";
 import { useRef, useState, forwardRef, useCallback, useImperativeHandle } from "react";
 
 import { cn } from "@/lib/utils";
-import { ProfileServerState } from "@/lib/types";
-
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { UploadIcon } from "@/components/icons/upload-icon";
 
 import { ImagePickerButton } from "./image-picker-button";
-import { IMAGE_VALIDATION, ImageTypes } from "@/app/(main)/schema/profile-schema";
+import {
+  IMAGE_VALIDATION,
+  ImageTypes,
+  ProfileServerState,
+} from "@/app/(main)/schema/profile-schema";
 
 export type ImageFieldRef = {
   getSelectedFile: () => File | null;
@@ -99,8 +101,7 @@ export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
     };
 
     const serverError =
-      serverState?.errors?.profileImage?.[0] ||
-      (serverState?.data?.profileImage && serverState.message); // gets the error msg related to the image field
+      serverState?.errors?.image?.[0] || (serverState?.data?.image && serverState.message); // gets the error msg related to the image field
     const hasError = error || serverError;
 
     const displayedImage = previewUrl || existingImageUrl;
@@ -187,7 +188,7 @@ export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
             <Input
               ref={imageRef}
               type="file"
-              name="profileImage"
+              name="image"
               form="profile-form"
               className="hidden"
               accept="image/png, image/jpeg, image/jpg, image/webp"

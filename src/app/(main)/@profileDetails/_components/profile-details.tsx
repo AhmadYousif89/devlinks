@@ -6,8 +6,9 @@ import { useActionState, useEffect, useRef } from "react";
 
 import SaveIcon from "public/assets/images/icon-changes-saved.svg";
 
-import { ProfileServerState, UserProfileDisplay } from "@/lib/types";
+import { UserProfileDisplay } from "@/lib/types";
 import { updateProfile } from "@/app/(main)/actions/profile";
+import { ProfileServerState } from "../../schema/profile-schema";
 
 import { ProfileInputFields } from "./input-fields";
 import { ImageFieldRef, ProfileImageField } from "./image-field";
@@ -39,10 +40,8 @@ export const ProfileDetails = ({ profileDataPromise }: ProfileDetailsProps) => {
 
   const handleSubmit = (formData: FormData) => {
     const selectedFile = imageFieldRef.current?.getSelectedFile();
-    console.log("Selected file:", selectedFile);
-    if (selectedFile && selectedFile.size > 0) formData.set("profileImage", selectedFile);
-    else formData.delete("profileImage");
-
+    if (selectedFile && selectedFile.size > 0) formData.set("image", selectedFile);
+    else formData.delete("image");
     formAction(formData);
   };
 

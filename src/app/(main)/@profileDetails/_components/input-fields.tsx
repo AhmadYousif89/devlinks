@@ -1,13 +1,17 @@
 import { useRef, useState, useCallback, useEffect, use } from "react";
 
-import { ProfileServerState, UserProfileDisplay } from "@/lib/types";
-import { FieldName, profileSchema } from "@/app/(main)/schema/profile-schema";
+import { UserProfileDisplay } from "@/lib/types";
+import {
+  ProfileServerState,
+  ProfileFieldNames,
+  profileSchema,
+} from "@/app/(main)/schema/profile-schema";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type InputFieldNames = Exclude<FieldName, "profileImage">;
+type InputFieldNames = Exclude<ProfileFieldNames, "image">;
 
 const CUSTOM_VALIDATION_MESSAGES: Record<InputFieldNames, Record<string, string>> = {
   firstName: {
@@ -18,10 +22,16 @@ const CUSTOM_VALIDATION_MESSAGES: Record<InputFieldNames, Record<string, string>
     "Can't be empty": "Please enter your last name",
     "Too long": "Last name must be 50 characters or less",
   },
-  email: {
+  displayEmail: {
     "Email not valid": "Please enter a valid email address (e.g., name@example.com)",
   },
 } as const;
+
+const initialFormData = (profileData: UserProfileDisplay | null) => ({
+  firstName: { value: profileData?.firstName || "", error: "" },
+  lastName: { value: profileData?.lastName || "", error: "" },
+  displayEmail: { value: profileData?.displayEmail || "", error: "" },
+});
 
 type InputFieldsProps = {
   serverState: ProfileServerState;
@@ -30,21 +40,17 @@ type InputFieldsProps = {
 
 export const ProfileInputFields = ({ serverState, profileDataPromise }: InputFieldsProps) => {
   const profileData = use(profileDataPromise);
-  const [formData, setFormData] = useState(() => ({
-    firstName: { value: profileData?.firstName || "", error: "" },
-    lastName: { value: profileData?.lastName || "", error: "" },
-    email: { value: profileData?.displayEmail || "", error: "" },
-  }));
+  const [formData, setFormData] = useState(initialFormData(profileData));
 
   const inputRefs = useRef<Record<InputFieldNames, HTMLInputElement | null>>({
     firstName: null,
     lastName: null,
-    email: null,
+    displayEmail: null,
   });
 
   const firstName = formData.firstName.value;
   const lastName = formData.lastName.value;
-  const email = formData.email.value;
+  const email = formData.displayEmail.value;
 
   const validateField = useCallback(
     (name: InputFieldNames, value: string | undefined) => {
@@ -93,8 +99,8 @@ export const ProfileInputFields = ({ serverState, profileDataPromise }: InputFie
           ...prev.lastName,
           error: serverState.errors?.lastName?.[0] || "",
         },
-        email: {
-          ...prev.email,
+        displayEmail: {
+          ...prev.displayEmail,
           error: serverState.errors?.displayEmail?.[0] || "",
         },
       }));
@@ -138,9 +144,6 @@ export const ProfileInputFields = ({ serverState, profileDataPromise }: InputFie
         </Label>
         <div className="grid @xl:max-w-[432px] @xl:flex-1">
           <Input id="firstName" placeholder="e.g. John" {...createFieldProps("firstName")} />
-          {/* {isLoading && (
-            <Skeleton className="bg-border/50 col-end-1 row-end-1 size-full self-center rounded-md" />
-          )} */}
           {(formData.firstName.error || serverState?.errors?.firstName) && (
             <small className="text-destructive bg-primary-foreground col-end-1 row-end-1 mr-2 ml-auto self-center p-1 text-xs">
               {formData.firstName.error || serverState?.errors?.firstName?.[0]}
@@ -158,9 +161,6 @@ export const ProfileInputFields = ({ serverState, profileDataPromise }: InputFie
         </Label>
         <div className="grid @xl:max-w-[432px] @xl:flex-1">
           <Input id="lastName" placeholder="e.g. Anderson" {...createFieldProps("lastName")} />
-          {/* {isLoading && (
-            <Skeleton className="bg-border/50 col-end-1 row-end-1 size-full self-center rounded-md" />
-          )} */}
           {(formData.lastName.error || serverState?.errors?.lastName) && (
             <small className="text-destructive bg-primary-foreground col-end-1 row-end-1 mr-2 ml-auto self-center p-1 text-xs">
               {formData.lastName.error || serverState?.errors?.lastName?.[0]}
@@ -171,24 +171,21 @@ export const ProfileInputFields = ({ serverState, profileDataPromise }: InputFie
 
       <fieldset className="space-y-1 @xl:flex @xl:items-center @xl:justify-between @xl:gap-4 @xl:space-y-0">
         <Label
-          htmlFor="email"
+          htmlFor="displayEmail"
           className="@xl:text-accent-foreground text-xs font-normal @xl:min-w-40 @xl:text-base"
         >
           Email
         </Label>
         <div className="grid @xl:max-w-[432px] @xl:flex-1">
           <Input
-            id="email"
             type="email"
+            id="displayEmail"
             placeholder="e.g. email@example.com"
-            {...createFieldProps("email")}
+            {...createFieldProps("displayEmail")}
           />
-          {/* {isLoading && (
-            <Skeleton className="bg-border/50 col-end-1 row-end-1 size-full self-center rounded-md" />
-          )} */}
-          {(formData.email.error || serverState?.errors?.displayEmail) && (
+          {(formData.displayEmail.error || serverState?.errors?.displayEmail) && (
             <small className="text-destructive bg-primary-foreground col-end-1 row-end-1 mr-2 ml-auto self-center p-1 text-xs">
-              {formData.email.error || serverState?.errors?.displayEmail?.[0]}
+              {formData.displayEmail.error || serverState?.errors?.displayEmail?.[0]}
             </small>
           )}
         </div>
