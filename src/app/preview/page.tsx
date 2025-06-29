@@ -2,15 +2,15 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { getLinksCount } from "../(main)/@addLinks/page";
-import { getUserFromSession } from "../(auth)/_lib/session";
-
-import { ShareLink } from "./share-link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { LinksPreview } from "../(main)/components/links-preview";
-import { ProfilePreview } from "../(main)/components/profile-preview";
+
+import { ShareLink } from "./share-link";
 import { GuestSharePrompt } from "./guest-share-prompt";
+import { getLinksCount } from "@/app/(main)/@addLinks/page";
+import { getUserFromSession } from "@/app/(auth)/_lib/session";
+import { LinksPreview } from "@/app/(main)/components/links-preview";
+import { ProfilePreview } from "@/app/(main)/components/profile-preview";
 
 export const metadata: Metadata = {
   title: "Devlinks | Preview",
@@ -36,7 +36,7 @@ export default async function PreviewPage() {
               </Link>
             </Button>
 
-            {user ? <ShareLink /> : <GuestSharePrompt />}
+            {user ? <ShareLink user={user} /> : <GuestSharePrompt />}
           </nav>
         </Card>
       </header>

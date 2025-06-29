@@ -13,11 +13,7 @@ export const GuestSharePrompt = () => {
 
   return (
     <>
-      <Button
-        onClick={() => setShowPrompt(true)}
-        variant="secondary"
-        className="h-11.5 w-40"
-      >
+      <Button onClick={() => setShowPrompt(true)} variant="secondary" className="h-11.5 w-40">
         Share Link 🔒
       </Button>
 
@@ -28,14 +24,12 @@ export const GuestSharePrompt = () => {
               <span className="mb-2 inline-grid size-10 place-content-center">
                 <ShareLinkIcon className="scale-100" />
               </span>
-              <h3 className="mb-2 text-lg font-semibold">
-                Get Your Shareable Link!
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold">Get Your Shareable Link!</h3>
               <p className="text-sm text-gray-600">
                 Sign up to get a permanent, shareable link like:
                 <br />
                 <code className="mt-1 inline-block rounded bg-gray-100 px-2 py-1 text-xs">
-                  devlinks.app/your-user-name
+                  devlinks.app/preview/your-user-name
                 </code>
               </p>
             </div>

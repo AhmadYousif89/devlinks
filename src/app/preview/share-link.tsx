@@ -1,15 +1,22 @@
 "use client";
 
 import { toast } from "sonner";
+
 import SaveToclipboardIcon from "public/assets/images/icon-link-copied-to-clipboard.svg";
 
 import { Button } from "@/components/ui/button";
+import { User } from "@/lib/types";
 
-export const ShareLink = () => {
+type ShareLinkProps = {
+  user: User | null;
+};
+
+export const ShareLink = ({ user }: ShareLinkProps) => {
   const handleLinkShare = async () => {
     try {
       const currentUrl = window.location.href;
-      await navigator.clipboard?.writeText(currentUrl);
+      const constructSharableLink = `${currentUrl}/${user?.username}/?id=${user?.id}`;
+      await navigator.clipboard?.writeText(constructSharableLink);
 
       toast("The link has been copied to your clipboard!", {
         icon: <SaveToclipboardIcon />,
