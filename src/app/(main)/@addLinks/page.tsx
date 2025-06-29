@@ -1,11 +1,8 @@
-import { cookies } from "next/headers";
-
 import { cache } from "@/lib/cache";
-import { config } from "@/lib/config";
 import connectToDatabase from "@/lib/db";
 import { Link, LinkDocument } from "@/lib/types";
 
-import { getUserFromSession } from "@/app/(auth)/_lib/session";
+import { getGuestSessionId, getUserFromSession } from "@/app/(auth)/_lib/session";
 import { AddLinks } from "@/app/(main)/@addLinks/_components/links";
 
 export default async function AddLinksSlot() {
@@ -21,14 +18,19 @@ async function getUserContext() {
     return { userId, guestSessionId: undefined };
   }
 
-  const cookieStore = await cookies();
-  const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
+  const guestSessionId = await getGuestSessionId();
   return { userId: null, guestSessionId };
 }
 
+// Public function that extracts dynamic data and calls the cached function
+export async function getLinksFromDB() {
+  const { userId, guestSessionId } = await getUserContext();
+  return _getCachedLinksFromDB(userId, guestSessionId);
+}
+
 // Make cached function pure - only depends on parameters
-const _getLinksFromDBCached = cache(
-  async (userId: string | null, guestSessionId: string | undefined): Promise<Link[]> => {
+const _getCachedLinksFromDB = cache(
+  async (userId: string | null, guestSessionId: string | undefined) => {
     const { db } = await connectToDatabase();
     const collection = db.collection<LinkDocument>("links");
 
@@ -56,7 +58,6 @@ const _getLinksFromDBCached = cache(
         })
         .toArray();
 
-      console.log("Links fetched from DB:", links);
       return links;
     } catch (error) {
       console.error("Error fetching links:", error);
@@ -70,13 +71,12 @@ const _getLinksFromDBCached = cache(
   },
 );
 
-// Public function that extracts dynamic data and calls the cached function
-export async function getLinksFromDB() {
+export async function getLinksCount() {
   const { userId, guestSessionId } = await getUserContext();
-  return _getLinksFromDBCached(userId, guestSessionId);
+  return _getCachedLinksCount(userId, guestSessionId);
 }
 
-const _getLinksCountCached = cache(
+const _getCachedLinksCount = cache(
   async (userId: string | null, guestSessionId: string | undefined) => {
     const { db } = await connectToDatabase();
     const collection = db.collection<LinkDocument>("links");
@@ -98,8 +98,3 @@ const _getLinksCountCached = cache(
     tags: ["links-count"],
   },
 );
-
-export async function getLinksCount() {
-  const { userId, guestSessionId } = await getUserContext();
-  return _getLinksCountCached(userId, guestSessionId);
-}

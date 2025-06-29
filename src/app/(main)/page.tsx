@@ -1,13 +1,11 @@
-import { Metadata } from "next";
-
 import SessionExpiredNotification from "@/components/session-expired-notification";
-import { getSerializedUserSession } from "../(auth)/_lib/session";
+import { getUserSession } from "../(auth)/_lib/session";
 
 type Props = {
   searchParams: Promise<{ v?: string }>;
 };
 
-export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: Props) {
   const sp = await searchParams;
 
   let title = "Devlinks | Home";
@@ -31,7 +29,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function HomePage() {
-  return <SessionExpiredNotification getUserSession={getSerializedUserSession()} />;
+  return <SessionExpiredNotification getUserSession={getUserSession()} />;
 }
 
 export const dynamic = "force-dynamic";
