@@ -44,7 +44,7 @@ export async function loginUser(prevState: AuthFormState, formData: FormData) {
 
   try {
     const { db } = await connectToDatabase();
-    const user = await db.collection<UserDocument>("users").findOne({ email });
+    const user = await db.collection<UserDocument>("users").findOne({ email, registered: true });
 
     if (!user) {
       return {

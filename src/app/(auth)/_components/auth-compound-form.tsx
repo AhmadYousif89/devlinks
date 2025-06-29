@@ -249,9 +249,11 @@ const AuthForm = <T extends string>({
 
         <div className="flex flex-col items-center md:flex-row md:justify-center md:gap-1">
           <p className="text-accent-foreground">{linkText}</p>
-          <Link href={linkHref} className="text-primary">
-            {linkLabel}
-          </Link>
+          <span>
+            <Link href={linkHref} className="text-primary">
+              {linkLabel}
+            </Link>
+          </span>
         </div>
       </Form>
     </AuthFormContext.Provider>

@@ -42,7 +42,7 @@ async function handleUserCreation(data: SignUpFormData) {
     const collection = db.collection<UserDocument>("users");
 
     // Check if the user already exists
-    const existingUser = await collection.findOne({ email });
+    const existingUser = await collection.findOne({ email, registered: true });
     if (existingUser) {
       return {
         success: false,
