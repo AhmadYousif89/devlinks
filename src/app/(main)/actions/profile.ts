@@ -1,29 +1,25 @@
 "use server";
 
-import { Collection, ObjectId } from "mongodb";
-import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
+import { Collection, ObjectId } from "mongodb";
 
 import { cache } from "@/lib/cache";
-import { config } from "@/lib/config";
 import connectToDatabase from "@/lib/db";
 import { extractUserNameParts } from "@/lib/utils";
-import { ProfileServerState, UserDocument, User, UserProfileDisplay } from "@/lib/types";
 import { TEST_GUEST_SESSION_EXPIRE_TIME } from "@/lib/constants";
+import { UserDocument, User, UserProfileDisplay } from "@/lib/types";
 import {
   getGuestSessionId,
   getUserFromSession,
-  getOrCreateTempSession,
+  getOrCreateGuestSession,
 } from "@/app/(auth)/_lib/session";
+import {
+  ProfileServerState,
+  ProfileFormData,
+  profileSchema,
+  ProfileDataToSave,
+} from "../schema/profile-schema";
 import { uploadToCloudinary } from "./cloudinary";
-import { ProfileFormData, profileSchema } from "../schema/profile-schema";
-
-type profileDataToSave = {
-  username: string;
-  displayEmail: string;
-  email: string;
-  image?: string;
-};
 
 async function getUserProfileContext() {
   const user = await getUserFromSession();
@@ -45,16 +41,13 @@ async function getUserProfileContext() {
   };
 }
 
-const _getProfileDataCached = cache(
+const _getCachedProfileData = cache(
   async (
     type: "registered" | "guest",
     userId: string | undefined,
     userData: User | null,
     guestSessionId: string | undefined,
   ) => {
-    const { db } = await connectToDatabase();
-    const collection = db.collection<UserDocument>("users");
-
     // Return registered user data
     if (type === "registered" && userData && userId) {
       const [firstName, lastName] = extractUserNameParts(userData.username);
@@ -70,6 +63,8 @@ const _getProfileDataCached = cache(
 
     // Check for guest user data
     if (type === "guest" && guestSessionId) {
+      const { db } = await connectToDatabase();
+      const collection = db.collection<Omit<UserDocument, "email">>("users");
       const guestUser = await collection.findOne({
         guestSessionId,
         registered: false,
@@ -80,7 +75,7 @@ const _getProfileDataCached = cache(
         const guest: UserProfileDisplay = {
           firstName,
           lastName,
-          displayEmail: guestUser.displayEmail || guestUser.email,
+          displayEmail: guestUser.displayEmail || "",
           image: guestUser.image || "",
           registered: false,
         };
@@ -88,7 +83,6 @@ const _getProfileDataCached = cache(
       }
     }
 
-    // Return empty data for new guests
     return null;
   },
   ["getProfileData"],
@@ -101,7 +95,7 @@ const _getProfileDataCached = cache(
 export async function getProfileData() {
   const userProfileCtx = await getUserProfileContext();
 
-  const profileData = await _getProfileDataCached(
+  const profileData = await _getCachedProfileData(
     userProfileCtx.type,
     userProfileCtx.userId,
     userProfileCtx.userData,
@@ -115,13 +109,13 @@ export async function updateProfile(
   prevState: ProfileServerState,
   formData: FormData,
 ): Promise<ProfileServerState> {
-  const profileImage = formData.get("profileImage") as File;
+  const image = formData.get("image") as File;
 
   const data: ProfileFormData = {
     firstName: formData.get("firstName")?.toString() ?? "",
     lastName: formData.get("lastName")?.toString() ?? "",
-    email: formData.get("email")?.toString() ?? "",
-    profileImage: profileImage?.size > 0 ? profileImage : undefined,
+    displayEmail: formData.get("displayEmail")?.toString() ?? "",
+    image: image?.size > 0 ? image : undefined,
   };
 
   const result = profileSchema.safeParse(data);
@@ -141,10 +135,10 @@ async function handleProfileUpdate(data: ProfileFormData) {
   try {
     let image: string = "";
 
-    if (data.profileImage) {
+    if (data.image) {
       try {
         console.log("Uploading image to Cloudinary...");
-        image = await uploadToCloudinary(data.profileImage);
+        image = await uploadToCloudinary(data.image);
       } catch (uploadError) {
         console.log("Image upload failed:", uploadError);
         return {
@@ -157,23 +151,17 @@ async function handleProfileUpdate(data: ProfileFormData) {
     // Check if user is authenticated
     const user = await getUserFromSession();
     const { db } = await connectToDatabase();
-    const collection = db.collection<UserDocument>("users");
+    const collection = db.collection<Omit<UserDocument, "email">>("users");
+
+    const profileData: ProfileDataToSave = {
+      username: data.firstName + " " + data.lastName,
+      displayEmail: data.displayEmail ?? "",
+      ...(image && { image }),
+    };
 
     if (user?.id && user.registered) {
-      const profileData: Omit<profileDataToSave, "email"> = {
-        username: data.firstName + " " + data.lastName,
-        displayEmail: data.email ?? "",
-        ...(image && { image }),
-      };
       await collection.updateOne({ _id: new ObjectId(user.id) }, { $set: profileData });
     } else {
-      const profileData: profileDataToSave = {
-        username: data.firstName + " " + data.lastName,
-        email: data.email ?? "",
-        displayEmail: data.email ?? "",
-        ...(image && { image }),
-      };
-      console.log("Handling guest profile update...");
       await handleGuestProfileUpdate(profileData, collection);
     }
 
@@ -192,22 +180,21 @@ async function handleProfileUpdate(data: ProfileFormData) {
 }
 
 async function handleGuestProfileUpdate(
-  data: profileDataToSave,
-  collection: Collection<UserDocument>,
+  data: ProfileDataToSave,
+  collection: Collection<Omit<UserDocument, "email">>,
 ) {
-  const guestSessionId = await getOrCreateTempSession();
+  const guestSessionId = await getOrCreateGuestSession();
   const createdAt = new Date();
   const expiresAt = new Date(createdAt.getTime() + TEST_GUEST_SESSION_EXPIRE_TIME);
 
-  const guestUserData: UserDocument = {
+  const guestUserData = {
     ...data,
     registered: false,
     guestSessionId,
     createdAt,
     expiresAt,
   };
-  console.log("Guest user data:", guestUserData);
-  // Check if a guest profile already exists with the same guestSessionId in the database
+  // Check if a guest profile already exists with the same guestSessionId
   const exGuestUser = await collection.findOne({
     guestSessionId,
     registered: false,
@@ -216,12 +203,11 @@ async function handleGuestProfileUpdate(
   if (exGuestUser) {
     // Update existing guest user profile
     try {
-      console.log("Updating existing guest user profile...");
       await collection.updateOne(
         { guestSessionId, registered: false },
         {
           $set: {
-            email: guestUserData.email,
+            email: guestUserData.displayEmail,
             username: guestUserData.username,
             ...(data.image && { image: data.image }),
           },
@@ -229,15 +215,15 @@ async function handleGuestProfileUpdate(
       );
       console.log("✅ Updated guest user profile");
     } catch (error) {
-      console.error("Error updating guest user profile:", error);
+      console.log("Error updating guest user profile:", error);
       return {
         success: false,
         message: "Failed to update guest profile. Please try again.",
       };
     }
   } else {
+    // Create new guest user profile
     try {
-      // Create new guest user profile
       await collection.insertOne(guestUserData);
       console.log("✅ Created new guest user profile");
     } catch (error) {
@@ -251,8 +237,7 @@ async function handleGuestProfileUpdate(
 }
 
 export async function transferGuestProfileToUser(userId: string) {
-  const cookieStore = await cookies();
-  const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
+  const guestSessionId = await getGuestSessionId();
 
   if (!guestSessionId) return; // Nothing to transfer if no guest session exists
 
@@ -266,7 +251,7 @@ export async function transferGuestProfileToUser(userId: string) {
     });
 
     if (guestUser) {
-      const updateFields: Partial<UserDocument> = {};
+      const updateFields = {} as Pick<UserDocument, "username" | "image" | "displayEmail">;
 
       if (guestUser.username?.trim()) {
         updateFields.username = guestUser.username;
@@ -283,11 +268,9 @@ export async function transferGuestProfileToUser(userId: string) {
       // Only update if there are fields to update
       if (Object.keys(updateFields).length > 0) {
         await collection.updateOne({ _id: new ObjectId(userId) }, { $set: updateFields });
-        console.log(`✅ Transferred profile data to user ${userId}:`, updateFields);
       }
       // Delete the guest user profile after successful transfer
       await collection.deleteOne({ guestSessionId, registered: false });
-      // Revalidate the profile tag to refresh cached data
       revalidateTag("profile");
       console.log(`✅ Transferred profile data to user ${userId}`);
     }
