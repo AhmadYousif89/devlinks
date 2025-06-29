@@ -13,7 +13,7 @@ import connectToDatabase from "@/lib/db";
 import { SessionExpirationDocument, User, UserDocument, UserSessionDocument } from "@/lib/types";
 
 // Generate temporary session ID for guest users
-export async function getOrCreateTempSession() {
+export async function getOrCreateGuestSession() {
   const cookieStore = await cookies();
   const exGuestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
 
@@ -146,11 +146,13 @@ export async function getAuthData() {
 
 export async function getUserFromSession() {
   const auth = await getAuthData();
+
   if (!auth || "expired" in auth) return null;
+
   return auth.user;
 }
 
-export async function getSerializedUserSession() {
+export async function getUserSession() {
   const auth = await getAuthData();
 
   if (!auth) return null;
@@ -165,8 +167,6 @@ export async function getSerializedUserSession() {
   return {
     sessionId: session.sessionId,
     userId: session.userId,
-    createdAt: new Date(session.createdAt).toISOString(),
-    expiresAt: new Date(session.expiresAt).toISOString(),
   };
 }
 
