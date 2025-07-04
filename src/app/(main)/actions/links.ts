@@ -1,14 +1,20 @@
 "use server";
 
 import { ObjectId } from "mongodb";
-import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
 
 import { config } from "@/lib/config";
 import connectToDatabase from "@/lib/db";
 import { normalizeURL } from "@/lib/utils";
-import { TEST_GUEST_LINK_EXPIRE_TIME } from "@/lib/constants";
-import { Link, LinkDocument, PlatformKey, PlatformNames } from "@/lib/types";
+import { TEST_GUEST_SESSION_EXPIRE_TIME } from "@/lib/constants";
+import {
+  DeleteLinkState,
+  Link,
+  LinkDocument,
+  PlatformKey,
+  PlatformNames,
+  UserDocument,
+} from "@/lib/types";
 import {
   getGuestSessionId,
   getOrCreateGuestSession,
@@ -16,69 +22,133 @@ import {
 } from "@/app/(auth)/_lib/session";
 
 export async function createNewLink() {
-  const { db } = await connectToDatabase();
-  const collection = db.collection<LinkDocument>("links");
-
-  // Check if user is logged in
   const user = await getUserFromSession();
   const userId = user?.id;
-  const guestSessionId = userId ? undefined : await getOrCreateGuestSession();
 
+  if (userId && user.registered) {
+    console.log("Creating new link for registered user:", userId);
+    await createRegisteredUserLink(userId);
+  } else {
+    console.log("Creating new link for guest user");
+    await createGuestUserLink();
+  }
+}
+
+async function createRegisteredUserLink(userId: string) {
+  const { db } = await connectToDatabase();
+  const collection = db.collection<LinkDocument>("links");
   try {
-    const query = userId ? { userId } : { guestSessionId, userId: { $exists: false } };
-
     const createdAt = new Date();
-    // Set expiresAt for temp links only, default to 7 days if no userId
-    const expiresAt = !userId
-      ? new Date(createdAt.getTime() + TEST_GUEST_LINK_EXPIRE_TIME)
-      : undefined;
-    const lastLink = await collection.findOne(query, { sort: { order: -1 } });
+    const lastLink = await collection.findOne({ userId }, { sort: { order: -1 } });
     const nextOrder = lastLink ? lastLink.order + 1 : 1;
+
     const newLink: LinkDocument = {
       platform: "GitHub" as PlatformNames,
       url: "",
       order: nextOrder,
       createdAt,
-      ...(userId ? { userId } : { guestSessionId, expiresAt }),
+      userId,
     };
 
     await collection.insertOne(newLink);
-    console.log("✨ New link created, invalidating cache...");
+    console.log("New registered user link created");
+    revalidateTag("links");
+    revalidateTag("links-count");
   } catch (error) {
-    console.error("Error creating new link:", error);
+    console.error("Error creating registered user link:", error);
   }
-
-  console.log("🗑️ Invalidating cache tags: links, links-count");
-  revalidateTag("links");
-  revalidateTag("links-count");
-  console.log("🔄 Cache invalidated and path revalidated");
 }
 
-export async function deleteLink(id: string) {
-  const { db, client } = await connectToDatabase();
-  const collection = db.collection<LinkDocument>("links");
+async function createGuestUserLink() {
+  const { db } = await connectToDatabase();
+  const collection = db.collection<UserDocument>("users");
+  try {
+    const guestSessionId = await getOrCreateGuestSession();
 
+    const createdAt = new Date();
+    const guestExpireTime =
+      config.NODE_ENV === "production"
+        ? parseInt(config.GUEST_SESSION_EXPIRE_TIME)
+        : TEST_GUEST_SESSION_EXPIRE_TIME;
+    const expiresAt = new Date(createdAt.getTime() + guestExpireTime);
+
+    // Find existing guest user or create new one
+    const guestUser = await collection.findOne({
+      guestSessionId,
+      registered: false,
+    });
+
+    const newLink: LinkDocument = {
+      _id: new ObjectId(),
+      platform: "GitHub" as PlatformNames,
+      url: "",
+      order: 1, // Will update based on existing guest links
+      createdAt,
+    };
+
+    if (guestUser) {
+      // Update existing guest user
+      const currentLinks = guestUser?.links || [];
+      const nextOrder =
+        currentLinks.length > 0 ? Math.max(...currentLinks.map((l) => l.order)) + 1 : 1;
+
+      newLink.order = nextOrder;
+
+      await collection.updateOne(
+        { guestSessionId, registered: false },
+        { $push: { links: newLink } },
+      );
+    } else {
+      const newGuestUser: UserDocument = {
+        registered: false,
+        guestSessionId,
+        createdAt,
+        expiresAt, // TTL index will handle expiration
+        isNotified: false, // First link, so not notified yet
+        links: [newLink],
+      };
+
+      await collection.insertOne(newGuestUser);
+    }
+
+    console.log("New guest user link created");
+    revalidateTag("profile");
+    revalidateTag("links-count");
+  } catch (error) {
+    console.error("Error creating guest user link:", error);
+  }
+}
+
+export async function deleteLink(prevState: DeleteLinkState, linkId: string) {
   const user = await getUserFromSession();
   const userId = user?.id;
 
-  let query = {};
-  if (userId) {
-    query = { userId };
-  } else {
-    const cookieStore = await cookies();
-    const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
-    if (guestSessionId) {
-      query = { guestSessionId, userId: { $exists: false } };
-    } else {
-      console.log("No valid session found for deletion");
-      return false;
-    }
-  }
+  try {
+    let success = false;
 
+    if (userId && user.registered) {
+      success = await deleteRegisteredUserLink(linkId, userId);
+    } else {
+      success = await deleteGuestUserLink(linkId);
+    }
+    if (success) {
+      return { success: true, deletedId: linkId };
+    } else {
+      return { success: false, error: "Failed to delete link" };
+    }
+  } catch (error) {
+    console.error("Error in deleteLink action:", error);
+    return { success: false, error: "An error occurred while deleting the link" };
+  }
+}
+
+async function deleteRegisteredUserLink(id: string, userId: string) {
+  const { db, client } = await connectToDatabase();
+  const collection = db.collection<LinkDocument>("links");
   try {
     const linkToDelete = await collection.findOne({
       _id: new ObjectId(id),
-      ...query,
+      userId,
     });
 
     if (!linkToDelete) {
@@ -86,19 +156,17 @@ export async function deleteLink(id: string) {
       return false;
     }
 
-    // should handle race conditions by using atomic operations
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
         await collection.deleteOne({ _id: linkToDelete._id }, { session });
         await collection.updateMany(
-          { order: { $gt: linkToDelete.order }, ...query },
+          { order: { $gt: linkToDelete.order }, userId },
           { $inc: { order: -1 } },
           { session },
         );
       });
 
-      console.log("🗑️ Link deleted successfully, invalidating cache...");
       revalidateTag("links");
       revalidateTag("links-count");
       return true;
@@ -106,7 +174,51 @@ export async function deleteLink(id: string) {
       await session.endSession();
     }
   } catch (error) {
-    console.error("Error deleting link:", error);
+    console.error("Error deleting registered user link:", error);
+    return false;
+  }
+}
+
+async function deleteGuestUserLink(id: string) {
+  const guestSessionId = await getGuestSessionId();
+  if (!guestSessionId) {
+    console.log("No guest session found for deletion");
+    return false;
+  }
+
+  const { db } = await connectToDatabase();
+  const collection = db.collection<UserDocument>("users");
+
+  try {
+    const guestUser = await collection.findOne({
+      guestSessionId,
+      registered: false,
+    });
+
+    if (!guestUser || !guestUser.links) {
+      console.log("No guest user or links found");
+      return false;
+    }
+
+    // Remove the link and reorder
+    const updatedLinks = guestUser.links
+      .filter((link) => link._id?.toString() !== id)
+      .map((link, index) => ({
+        ...link,
+        order: index + 1, // Reorder starting from 1
+      }));
+
+    await collection.updateOne(
+      { guestSessionId, registered: false },
+      { $set: { links: updatedLinks } },
+    );
+
+    console.log("🗑️ Guest user link deleted successfully");
+    revalidateTag("profile");
+    revalidateTag("links-count");
+    return true;
+  } catch (error) {
+    console.error("Error deleting guest user link:", error);
     return false;
   }
 }
@@ -114,7 +226,6 @@ export async function deleteLink(id: string) {
 export async function updateLinkForm(formData: FormData) {
   const entries = Object.fromEntries(formData.entries());
   const linkUpdates: Record<string, Partial<Link>> = {};
-  let hasActualChanges = false;
 
   // Extract input data from each link
   Object.entries(entries).forEach(([key, value]) => {
@@ -142,34 +253,31 @@ export async function updateLinkForm(formData: FormData) {
   });
   // Early return if no updates
   if (Object.keys(linkUpdates).length === 0) {
-    console.log("⏭️ No form data to update, skipping");
+    console.log("No form data to update, skipping");
     return;
   }
 
-  const linkIds = Object.keys(linkUpdates).map((id) => new ObjectId(id));
+  const user = await getUserFromSession();
+  const userId = user?.id;
+  if (userId && user.registered) {
+    await updateRegisteredUserLinks(linkUpdates, userId);
+  } else {
+    await updateGuestUserLinks(linkUpdates);
+  }
+  return { success: true };
+}
 
+async function updateRegisteredUserLinks(
+  linkUpdates: Record<string, Partial<Link>>,
+  userId: string,
+) {
   const { db } = await connectToDatabase();
   const collection = db.collection<LinkDocument>("links");
 
-  const user = await getUserFromSession();
-  const userId = user?.id;
-
-  let query = {};
-  if (userId) {
-    query = { userId };
-  } else {
-    const cookieStore = await cookies();
-    const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
-    if (guestSessionId) {
-      query = { guestSessionId, userId: { $exists: false } };
-    } else {
-      console.log("No guest session Id was found");
-      return;
-    }
-  }
-
+  const linkIds = Object.keys(linkUpdates).map((id) => new ObjectId(id));
+  let hasActualChanges = false;
   try {
-    const currentLinks = await collection.find({ _id: { $in: linkIds }, ...query }).toArray();
+    const currentLinks = await collection.find({ _id: { $in: linkIds }, userId }).toArray();
 
     const currentLinksMap = new Map(
       currentLinks.map((link) => [
@@ -203,7 +311,7 @@ export async function updateLinkForm(formData: FormData) {
         changedFields.url = url;
         hasActualChanges = true;
       }
-      if (!!order && order !== currentLink.order) {
+      if (order !== undefined && order !== currentLink.order) {
         changedFields.order = order;
         hasActualChanges = true;
       }
@@ -218,11 +326,10 @@ export async function updateLinkForm(formData: FormData) {
       console.log("⏭️ No actual changes detected, skipping database update");
       return;
     }
-
     // Only update links that actually changed
     const updatePromises = Object.values(actualUpdates).map(async (linkData) => {
       const { id, ...updatedFields } = linkData;
-      return collection.updateOne({ _id: new ObjectId(id), ...query }, { $set: updatedFields });
+      return collection.updateOne({ _id: new ObjectId(id), userId }, { $set: updatedFields });
     });
 
     const results = await Promise.all(updatePromises);
@@ -232,6 +339,7 @@ export async function updateLinkForm(formData: FormData) {
 
     if (modifiedCount > 0) {
       revalidateTag("links");
+      revalidateTag("links-count");
       console.log("🔄 Links cache invalidated after actual form update");
     } else {
       console.log("⏭️ No database changes made, skipping cache invalidation");
@@ -242,38 +350,113 @@ export async function updateLinkForm(formData: FormData) {
   }
 }
 
-// Function to transfer temporary links to a registered user account
-export async function transferGuestLinksToUser(userId: string) {
+async function updateGuestUserLinks(linkUpdates: Record<string, Partial<Link>>) {
   const guestSessionId = await getGuestSessionId();
+  if (!guestSessionId) {
+    console.log("No guest session found for update");
+    return;
+  }
 
-  if (!guestSessionId) return;
-
+  let hasActualChanges = false;
   try {
     const { db } = await connectToDatabase();
-    const collection = db.collection<LinkDocument>("links");
+    const collection = db.collection<UserDocument>("users");
+    const guestUser = await collection.findOne({
+      guestSessionId,
+      registered: false,
+    });
 
-    // Transfer anonymous links to user account
-    const result = await collection.updateMany(
-      {
-        guestSessionId,
-        userId: { $exists: false },
-      },
-      {
-        // Remove guest session fields and set userId
-        $set: { userId },
-        $unset: { guestSessionId: "", expiresAt: "" },
-      },
+    if (!guestUser || !guestUser.links) {
+      console.log("No guest user or links found for update");
+      return;
+    }
+
+    const updatedLinks = guestUser.links.map((link) => {
+      const updates = linkUpdates[link._id?.toString() || ""];
+      if (!updates) return link; // No updates for this link - return the original link
+
+      const { platform, url, order } = updates;
+      console.log("Order to update:", order, "Current link order:", link.order);
+      const updatedLink = { ...link };
+      let hasChanges = false;
+
+      if (!!platform && platform !== link.platform) {
+        updatedLink.platform = platform;
+        hasChanges = true;
+      }
+      if (!!url && url !== link.url) {
+        updatedLink.url = url;
+        hasChanges = true;
+      }
+
+      if (order !== undefined && order !== link.order) {
+        updatedLink.order = order;
+        hasChanges = true;
+      }
+
+      if (hasChanges) hasActualChanges = true;
+
+      return updatedLink;
+    });
+
+    if (!hasActualChanges) {
+      console.log("No actual changes detected, skipping database update");
+      return;
+    }
+
+    const sortedLinks = updatedLinks.sort((a, b) => a.order - b.order);
+    const result = await collection.updateOne(
+      { guestSessionId, registered: false },
+      { $set: { links: sortedLinks } },
     );
 
-    console.log(`✅ Transferred ${result.modifiedCount} links to user ${userId}`);
-
-    return result.modifiedCount;
+    console.log(`Updated ${result.modifiedCount} guest user links`);
+    revalidateTag("profile");
+    revalidateTag("links-count");
   } catch (error) {
-    console.error("Error transferring links:", error);
-    return 0;
+    console.error("Error updating guest user links:", error);
   }
 }
 
 function isValidPlatform(value: string): value is PlatformNames | PlatformKey {
   return typeof value === "string" && value.length > 0;
+}
+
+// Function to transfer guest links to registered user
+export async function transferGuestLinksToUser(userId: string) {
+  const guestSessionId = await getGuestSessionId();
+  if (!guestSessionId) return;
+
+  try {
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection<UserDocument>("users");
+    const linksCollection = db.collection<LinkDocument>("links");
+
+    // Get guest user data
+    const guestUser = await usersCollection.findOne({
+      guestSessionId,
+      registered: false,
+    });
+
+    if (!guestUser || !guestUser.links || guestUser.links.length === 0) {
+      console.log("No guest links to transfer");
+      return;
+    }
+
+    // Convert guest embedded links to separate documents
+    const linksToInsert = guestUser.links.map((link) => ({
+      platform: link.platform,
+      url: link.url,
+      order: link.order,
+      createdAt: link.createdAt,
+      userId,
+    }));
+    // Insert links into links collection
+    await linksCollection.insertMany(linksToInsert);
+    console.log(`Transferred ${linksToInsert.length} links to user ${userId}`);
+    return;
+  } catch (error) {
+    console.error("Error transferring guest links:", error);
+    return 0;
+  }
 }
