@@ -1,3 +1,5 @@
+"use server";
+import "server-only";
 import crypto from "node:crypto";
 import { ObjectId } from "mongodb";
 import { cookies } from "next/headers";
@@ -43,12 +45,6 @@ export async function createUserSession(userId: string) {
   }
 
   const sessionId = crypto.randomBytes(256).toString("hex").normalize();
-  const createdAt = new Date();
-  const timeToExpireSession =
-    config.NODE_ENV === "production"
-      ? parseInt(config.SESSION_EXPIRE_TIME)
-      : TEST_SESSION_EXPIRE_TIME;
-  const expiresAt = new Date(createdAt.getTime() + timeToExpireSession);
 
   try {
     const { db } = await connectToDatabase();
@@ -58,11 +54,18 @@ export async function createUserSession(userId: string) {
     // Clean up old expiration notifications for this user
     await expirationsCollection.deleteMany({ userId });
 
+    const createdAt = new Date();
+    const sessionExpireTime =
+      config.NODE_ENV === "production"
+        ? parseInt(config.SESSION_EXPIRE_TIME)
+        : TEST_SESSION_EXPIRE_TIME;
+    const expiresAt = new Date(createdAt.getTime() + sessionExpireTime);
+
     const session: UserSessionDocument = {
       sessionId,
       userId,
-      createdAt,
-      expiresAt,
+      createdAt, // Now
+      expiresAt, // After 5 minutes
     };
 
     const result = await sessionsCollection.insertOne(session);
@@ -70,7 +73,7 @@ export async function createUserSession(userId: string) {
       throw new Error("Failed to create session");
     }
 
-    const timeToExpireNotification =
+    const notificationExpireTime =
       config.NODE_ENV === "production"
         ? parseInt(config.EXPIRED_NOTIFICATION_TIME)
         : TEST_EXPIRED_NOTIFICATION_TIME;
@@ -78,36 +81,29 @@ export async function createUserSession(userId: string) {
     const expirationRecord: SessionExpirationDocument = {
       userId,
       sessionId,
-      sessionExpiredAt: expiresAt,
-      expiresAt: new Date(expiresAt.getTime() + timeToExpireNotification),
+      sessionExpiredAt: expiresAt, // After 5 minutes
+      expiresAt: new Date(expiresAt.getTime() + notificationExpireTime), // After 5 minutes + 2 minute
     };
 
     await expirationsCollection.insertOne(expirationRecord);
-
-    const sessionMaxAge =
-      config.NODE_ENV === "production"
-        ? parseInt(config.SESSION_EXPIRE_TIME)
-        : TEST_SESSION_EXPIRE_TIME;
 
     const cookieStore = await cookies();
     cookieStore.set(config.USER_SESSION_KEY, sessionId, {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: sessionMaxAge / 1000, // Convert to seconds
+      maxAge: sessionExpireTime / 1000, // Convert to seconds
       path: "/",
     });
 
-    const currentUserMaxAge =
-      config.NODE_ENV === "production"
-        ? parseInt(config.SESSION_EXPIRE_TIME + config.EXPIRED_NOTIFICATION_TIME)
-        : TEST_SESSION_EXPIRE_TIME + TEST_EXPIRED_NOTIFICATION_TIME;
+    // sessionExpireTime + notificationExpireTime
+    const currentUserMaxAge = (sessionExpireTime + notificationExpireTime) / 1000;
 
     cookieStore.set(config.CURRENT_USER_KEY, userId, {
       httpOnly: true,
       secure: config.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: currentUserMaxAge / 1000,
+      maxAge: currentUserMaxAge,
       path: "/",
     });
   } catch (error) {
@@ -122,12 +118,22 @@ export async function getAuthData() {
     const sessionId = cookieStore.get(config.USER_SESSION_KEY)?.value;
     const currentUserId = cookieStore.get(config.CURRENT_USER_KEY)?.value;
 
-    // Check for expired sessions for the last known user
-    if (!sessionId && currentUserId) {
-      const expiredSession = await _getCachedExpiredSession(currentUserId);
+    try {
+      const { db } = await connectToDatabase();
+      const expirationsCollection = db.collection("session_expirations");
+
+      const now = new Date();
+      const expiredSession = await expirationsCollection.findOne({
+        userId: currentUserId,
+        sessionExpiredAt: { $lte: now },
+        expiresAt: { $gt: now },
+      });
+
       if (expiredSession) {
         return { expired: true, userId: currentUserId };
       }
+    } catch (error) {
+      console.error("Error checking expired session in middleware:", error);
     }
 
     if (!sessionId) return null;
@@ -139,7 +145,9 @@ export async function getAuthData() {
 
     return result;
   } catch (error) {
-    console.log("Error getting current session:", error);
+    if (config.NODE_ENV === "development" || process.env.VERCEL) {
+      console.log("Error getting current session:", error);
+    }
     return null;
   }
 }
@@ -172,11 +180,7 @@ export async function getUserSession() {
 
 export async function getGuestSessionId() {
   const cookieStore = await cookies();
-  const guestSessionId = cookieStore.get(config.GUEST_SESSION_KEY)?.value;
-
-  if (!guestSessionId) return;
-
-  return guestSessionId;
+  return cookieStore.get(config.GUEST_SESSION_KEY)?.value;
 }
 
 export async function clearSession() {
@@ -229,10 +233,10 @@ const _getCachedSessionAndUser = cache(
 
     const transformedUser: User = {
       id: user._id.toString(),
-      email: user.email,
-      displayEmail: user.displayEmail || user.email,
-      image: user.image ?? "",
-      username: user.username ?? "",
+      email: user.email || "",
+      displayEmail: user.displayEmail || user.email || "",
+      image: user.image || "",
+      username: user.username || "",
       registered: user.registered,
     };
 
@@ -242,26 +246,5 @@ const _getCachedSessionAndUser = cache(
   {
     revalidate: 60, // Cache for 1 minute
     tags: ["auth", "session"],
-  },
-);
-
-const _getCachedExpiredSession = cache(
-  async (userId: string) => {
-    const { db } = await connectToDatabase();
-    const expirationsCollection = db.collection<SessionExpirationDocument>("session_expirations");
-
-    const now = new Date();
-    const expiredSession = await expirationsCollection.findOne({
-      userId,
-      sessionExpiredAt: { $lte: now }, // Session expiry time has passed
-      expiresAt: { $gt: now }, // But notification period hasn't ended
-    });
-
-    return expiredSession;
-  },
-  ["getExpiredSession"],
-  {
-    revalidate: 30, // Cache for 30 seconds
-    tags: ["expired-sessions"],
   },
 );
