@@ -137,8 +137,9 @@ const AuthForm = <T extends string>({
       } as Record<T, string>;
 
       const result = schema.safeParse(currentValues);
-      const errorFieldKeys =
-        result.error?.formErrors.fieldErrors && Object.keys(result.error?.formErrors.fieldErrors);
+      const errorFieldKeys = result.error?.formErrors?.fieldErrors
+        ? Object.keys(result.error.formErrors.fieldErrors)
+        : [];
 
       const zodError = result.success ? "" : result.error.formErrors.fieldErrors[name]?.[0] || "";
 
