@@ -6,32 +6,34 @@ A modern, full-stack link-sharing platform built with Next.js, allowing users to
 
 - **Link Management**: Create, read, update, and delete links with real-time preview
 - **Drag & Drop**: Reorder links with intuitive drag-and-drop functionality
+- **Image Upload**: Profile picture upload with Cloudinary integration
 - **Profile Customization**: Add profile picture, name, and email with live preview
 - **Link Validation**: Smart URL validation for different platforms (GitHub, LinkedIn, etc.)
 - **Mobile Mockup**: Real-time preview of how your profile looks on mobile
-- **Share Profile**: Generate shareable profile links with copy-to-clipboard functionality
+- **Share Profile**: Generate a public shareable profile link
 - **User Authentication**: Secure sign-up and sign-in system
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Image Upload**: Profile picture upload with Cloudinary integration
+- **Highlight Banners**: Highlight important links with custom banners upon profile validation fails.
 
 ## 🛠️ Tech Stack
 
 ### Frontend
 
-- **Next.js 15.3.2** - React framework with App Router
-- **React 19** - UI library
+- **Next.js 15** - React framework with App Router
+- **React.js 19** - UI library
 - **TypeScript** - Type safety
 - **Tailwind CSS 4** - Styling framework
-- **Radix UI** - Accessible component primitives
+- **Shadcn UI** - Shadcn custom Accessible components
 - **DND Kit** - Drag and drop functionality
 - **Sonner** - Toast notifications
 
 ### Backend & Database
 
-- **Next.js API Routes** - Server-side API
-- **MongoDB 6.16.0** - Database
-- **Cloudinary** - Image hosting and optimization
+- **Next.js App Router** - Server side rendering and routing using the new App Router
+- **Server Actions** - Server actions for data mutations and form handling
 - **Authentication** - Custom authentication system with session management
+- **Cloudinary** - Image hosting and optimization
+- **MongoDB 6.16.0** - Database
 
 ## 📦 Installation
 
@@ -61,7 +63,6 @@ A modern, full-stack link-sharing platform built with Next.js, allowing users to
    CURRENT_USER_KEY=your_current_user_key
    GUEST_SESSION_KEY=your_guest_session_key
    SESSION_EXPIRE_TIME=your_session_expire_time
-   GUEST_LINK_EXPIRE_TIME=your_guest_link_expire_time
    GUEST_SESSION_EXPIRE_TIME=your_guest_session_expire_time
    EXPIRED_NOTIFICATION_TIME=your_expired_notification_time
    ```
@@ -116,31 +117,31 @@ devlinks/
 **Sign In / Sign Up**
 
 <div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
-  <img src="./public/screenshots/signin.png" alt="Sign In" width="25%" />
-  <img src="./public/screenshots/signup.png" alt="Sign Up" width="25%" />
-</div>
-
-**Desktop / Links / Profile / Preview**
-
-<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
-  <img src="./public/screenshots/links.png" alt="Links" width="25%" />
-  <img src="./public/screenshots/profile.png" alt="Profile" width="25%" />
-  <img src="./public/screenshots/preview.png" alt="Preview" width="25%" />
-</div>
-
-**Desktop Active**
-
-<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
-    <img src="./public/screenshots/active-links.png" alt="Links" width="25%" />
-  <img src="./public/screenshots/active-profile.png" alt="Profile" width="25%" />
+  <img src="./public/screenshots/signin.png" alt="Sign In" width="20%" />
+  <img src="./public/screenshots/signup.png" alt="Sign Up" width="20%" />
 </div>
 
 **Mobile Active**
 
 <div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
-  <img src="./public/screenshots/active-links-mobile.png" alt="Links" width="25%" />
-  <img src="./public/screenshots/active-profile-mobile.png" alt="Profile" width="25%" />
-  <img src="./public/screenshots/active-preview-mobile.png" alt="Profile" width="25%" />
+   <img src="./public/screenshots/active-links-mobile.png" alt="Links" width="15%" />
+   <img src="./public/screenshots/active-profile-mobile.png" alt="Profile" width="15%" />
+   <img src="./public/screenshots/active-preview-mobile.png" alt="Profile" width="15%" />
+</div>
+
+**Desktop**
+
+<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
+   <img src="./public/screenshots/links.png" alt="Links" width="25%" />
+   <img src="./public/screenshots/profile.png" alt="Profile" width="25%" />
+</div>
+
+**Desktop Active**
+
+<div style="display: flex; gap: 20px; margin-bottom: 20px; justify-content: center;">
+   <img src="./public/screenshots/active-links.png" alt="Links" width="25%" />
+   <img src="./public/screenshots/active-profile.png" alt="Profile" width="25%" />
+   <img src="./public/screenshots/preview.png" alt="Preview" width="25%" />
 </div>
 
 ## 🎯 Usage
@@ -162,8 +163,8 @@ devlinks/
 
 ### Sharing Your Profile
 
-1. Click "Preview" to see your public profile
-2. Click "Share Link" to copy the profile URL
+1. Click "Preview" to see your public profile and wait for a profile validation
+2. Click "Share Link" and see if you have some missing information
 3. Start sharing your personalized DevLinks profile with the world!
 
 ## 🚦 Scripts
@@ -190,6 +191,14 @@ Comprehensive validation for URLs, required fields, and platform-specific patter
 ### Image Upload
 
 Cloudinary integration for optimized image upload and delivery.
+
+### Authentication
+
+Custom authentication system with session management for guest and user session.
+
+### Preview Validation
+
+Preview validation to ensure links and profile information are complete before sharing.
 
 ### Responsive Design
 
