@@ -8,9 +8,11 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  startTransition,
 } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
 import { Link } from "@/lib/types";
 import { deleteLink } from "@/app/(main)/actions/links";
 
@@ -118,7 +120,9 @@ export function LinksProvider({
       // Add to pending deletes
       pendingDeletesRef.current.add(id);
       // Optimistically remove the link
-      setOptimisticLinks({ type: "DELETE", id });
+      startTransition(() => {
+        setOptimisticLinks({ type: "DELETE", id });
+      });
       const urlResult = updateUrlParams(id);
 
       try {

@@ -1,4 +1,4 @@
-import { memo, startTransition, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -56,9 +56,7 @@ const LinkItemComponent = ({
   const handleDelete = () => {
     setIsDeleting(true);
     try {
-      startTransition(() => {
-        deleteLink(id);
-      });
+      deleteLink(id);
     } finally {
       setIsDeleting(false);
     }

@@ -4,7 +4,7 @@ import { cache } from "@/lib/cache";
 import connectToDatabase from "@/lib/db";
 import { LinkDocument } from "@/lib/types";
 import { getProfileData } from "../actions/profile";
-import { getUserFromSession } from "@/app/(auth)/_lib/session";
+import { getUserFromSession, getUserSession } from "@/app/(auth)/_lib/session";
 import { createNewLink } from "@/app/(main)/actions/links";
 
 import { LinkList } from "./_components/link-list";
@@ -15,6 +15,7 @@ import { Spinner } from "@/components/icons/spinner";
 
 export default async function AddLinksSlot() {
   const count = await getLinksCount();
+  const session = await getUserSession();
 
   return (
     <>
@@ -29,8 +30,9 @@ export default async function AddLinksSlot() {
           <form action={createNewLink} className="h-11.5">
             <ButtonWithFormState
               variant="secondary"
-              actionLoader={<Spinner className="fill-primary size-6" />}
+              disabled={session?.expired}
               className="h-11.5 w-full text-base font-semibold"
+              actionLoader={<Spinner className="fill-primary size-6" />}
             >
               + Add new link
             </ButtonWithFormState>
@@ -48,7 +50,7 @@ export default async function AddLinksSlot() {
       >
         <ButtonWithFormState
           type="submit"
-          disabled={count < 1}
+          disabled={count < 1 || session?.expired}
           actionLoader={<Spinner className="size-8" />}
           className="h-11.5 w-full text-base font-semibold md:ml-auto md:w-22.75"
         >
