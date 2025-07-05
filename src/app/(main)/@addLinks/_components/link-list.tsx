@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useState, useCallback, useMemo } from "react";
 
 import {
@@ -24,11 +25,10 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 import { Link } from "@/lib/types";
 import { LinkItem } from "./link-item";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { HighlightBanner } from "@/components/highlight-banner";
 import { useLinks } from "../../contexts/links-context";
 import { WelcomeCard } from "@/components/welcome-card";
-import { useSearchParams } from "next/navigation";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { HighlightBanner } from "@/components/highlight-banner";
 
 const DNDContext = dynamic(() => import("@dnd-kit/core").then((mod) => mod.DndContext), {
   ssr: false,
@@ -39,10 +39,11 @@ export const LinkList = () => {
   const { links, optimisticLinks, setActualLinks } = useLinks();
   const searchParams = useSearchParams();
 
-  const highlightFaultyLinks = useMemo(
-    () => searchParams.get("highlight-links")?.split(",") || [],
-    [searchParams],
-  );
+  const highlightFaultyLinks = useMemo(() => {
+    const highlightIds = searchParams.get("highlight-links")?.split(",") || [];
+    const existingLinkIds = optimisticLinks.map((link) => link.id);
+    return highlightIds.filter((id) => existingLinkIds.includes(id));
+  }, [searchParams, optimisticLinks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
