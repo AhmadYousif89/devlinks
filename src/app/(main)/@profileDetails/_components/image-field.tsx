@@ -21,10 +21,11 @@ export type ImageFieldRef = {
 type ImageFieldProps = {
   serverState?: ProfileServerState;
   isSubmitting?: boolean;
+  isMissingImage?: boolean;
 };
 
 export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
-  ({ serverState, isSubmitting }, ref) => {
+  ({ serverState, isSubmitting, isMissingImage = false }, ref) => {
     const imageRef = useRef<HTMLInputElement | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -100,10 +101,9 @@ export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
       imageRef.current.value = "";
     };
 
-    const serverError =
-      serverState?.errors?.image?.[0] || (serverState?.data?.image && serverState.message); // gets the error msg related to the image field
+    const serverError = // gets the error msg related to the image field
+      serverState?.errors?.image?.[0] || (serverState?.data?.image && serverState.message);
     const hasError = error || serverError;
-
     const displayedImage = previewUrl || existingImageUrl;
 
     return (
@@ -111,7 +111,7 @@ export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
         {isSubmitting && !!selectedFile && (
           <div
             data-upload-overlay
-            className="bg-foreground/30 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[1px]"
+            className="bg-foreground/25 fixed inset-0 z-50 m-0 flex max-h-none max-w-none items-center justify-center backdrop-blur-[1px]"
           >
             <Card className="items-center gap-3 p-6 shadow">
               <UploadIcon className="fill-primary size-10" />
@@ -125,7 +125,10 @@ export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
           </div>
         )}
         <div className="@container">
-          <Card className="bg-background gap-4 p-5 @xl:flex-row @xl:items-center @xl:justify-between">
+          <Card
+            aria-invalid={isMissingImage}
+            className="bg-background gap-4 p-5 @xl:flex-row @xl:items-center @xl:justify-between"
+          >
             <p className="text-accent-foreground text-base @xl:min-w-40">Profile picture</p>
             <div className="flex flex-col gap-6 @xl:max-w-[432px] @xl:flex-row @xl:items-center">
               {displayedImage ? (
@@ -164,11 +167,12 @@ export const ProfileImageField = forwardRef<ImageFieldRef, ImageFieldProps>(
               ) : (
                 <div>
                   <ImagePickerButton
+                    aria-invalid={isMissingImage && !selectedFile}
                     onClick={openImagePicker}
                     disabled={isUploading}
                     className={cn(
                       "bg-accent text-primary hover:bg-accent/80 active:border-primary focus-visible:outline-1 focus-visible:outline-offset-2 active:border-2 active:border-dashed disabled:cursor-not-allowed disabled:opacity-50",
-                      hasError && "border-destructive border border-dashed",
+                      hasError ? "border-destructive border border-dashed" : "",
                     )}
                   >
                     <span>+ Upload Image</span>

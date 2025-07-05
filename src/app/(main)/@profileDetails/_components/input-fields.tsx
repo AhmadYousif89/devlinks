@@ -2,30 +2,15 @@ import { useRef, useState, useCallback, useEffect, use } from "react";
 
 import { UserProfileDisplay } from "@/lib/types";
 import {
+  CUSTOM_VALIDATION_MESSAGES,
   ProfileServerState,
-  ProfileFieldNames,
+  InputFieldNames,
   profileSchema,
 } from "@/app/(main)/schema/profile-schema";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type InputFieldNames = Exclude<ProfileFieldNames, "image">;
-
-const CUSTOM_VALIDATION_MESSAGES: Record<InputFieldNames, Record<string, string>> = {
-  firstName: {
-    "Can't be empty": "Please enter your first name",
-    "Too long": "First name must be 50 characters or less",
-  },
-  lastName: {
-    "Can't be empty": "Please enter your last name",
-    "Too long": "Last name must be 50 characters or less",
-  },
-  displayEmail: {
-    "Email not valid": "Please enter a valid email address (e.g., name@example.com)",
-  },
-} as const;
 
 const initialFormData = (profileData: UserProfileDisplay | null) => ({
   firstName: { value: profileData?.firstName || "", error: "" },
