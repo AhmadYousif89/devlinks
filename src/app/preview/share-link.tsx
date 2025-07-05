@@ -2,16 +2,16 @@
 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef } from "react";
 
 import { User } from "@/lib/types";
 import { validateUserInfo } from "./actions/preview";
 import SaveToclipboardIcon from "public/assets/images/icon-link-copied-to-clipboard.svg";
 
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/dialog-wrapper";
-import { ErrorCard } from "@/components/layout/error";
+import { CustomDialog, DialogRef } from "@/components/dialog-wrapper";
 import { ButtonWithFormState } from "@/components/button-with-formstate";
+import { WarningCard } from "@/components/layout/warning";
 
 type ShareLinkProps = {
   user: User | null;
@@ -31,8 +31,7 @@ const initialState: ShareLinkState = {
 
 export const ShareLink = ({ user }: ShareLinkProps) => {
   const [state, formAction, isPending] = useActionState(validateUserInfo, initialState);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const modalRef = useRef<HTMLDialogElement>(null);
+  const dialogRef = useRef<DialogRef>(null);
   const hasValidated = useRef(false);
   const router = useRouter();
 
@@ -79,16 +78,14 @@ export const ShareLink = ({ user }: ShareLinkProps) => {
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false);
-    modalRef.current?.close();
+    dialogRef.current?.close();
   };
 
   const handleSubmit = async () => {
     if (state.isValid) {
       await handleLinkShare();
     } else {
-      setIsModalOpen(true);
-      modalRef.current?.showModal();
+      dialogRef.current?.open();
     }
   };
 
@@ -97,17 +94,11 @@ export const ShareLink = ({ user }: ShareLinkProps) => {
     handleCloseModal();
   };
 
-  const handleDialogClose = (e: React.MouseEvent) => {
-    if (e.target === modalRef.current) {
-      handleCloseModal();
-    }
-  };
-
   return (
     <>
-      {!state.isValid && state.missingInfo.length > 0 && isModalOpen && (
-        <Dialog ref={modalRef} onClick={handleDialogClose} onClose={handleCloseModal}>
-          <ErrorCard
+      {!state.isValid && state.missingInfo.length > 0 && (
+        <CustomDialog ref={dialogRef} className="border-destructive/80 border p-5 shadow-lg">
+          <WarningCard
             className="relative"
             title="Missing Information"
             message="You have some missing information about your dev links!"
@@ -130,27 +121,16 @@ export const ShareLink = ({ user }: ShareLinkProps) => {
               </>
             }
           >
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleCloseModal}
-                aria-label="Close modal"
-                className="absolute top-3 right-3 size-6 text-xl"
-              >
-                &times;
-              </Button>
-              <ul className="space-y-2">
-                {state.missingInfo.map((info, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <span className="size-1.5 rounded-full bg-amber-700" />
-                    <span className="text-amber-700">{info}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          </ErrorCard>
-        </Dialog>
+            <ul className="space-y-2">
+              {state.missingInfo.map((info, index) => (
+                <li key={index} className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full bg-amber-700" />
+                  <span className="text-amber-700">{info}</span>
+                </li>
+              ))}
+            </ul>
+          </WarningCard>
+        </CustomDialog>
       )}
       <Button disabled={isPending} onClick={handleSubmit} className="h-11.5 w-40">
         {isPending ? "Validating..." : "Share Link"}

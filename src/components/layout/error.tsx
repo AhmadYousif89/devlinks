@@ -12,7 +12,7 @@ type Props = {
 
 export const ErrorCard = ({ children, title, message, actions, className }: Props) => {
   return (
-    <Card className={cn("border-destructive/80 mx-4 max-w-2xl border p-5 shadow-lg", className)}>
+    <Card className={cn("border-destructive/80 border p-5 shadow-lg", className)}>
       <CardContent className="flex gap-2">
         <div className="flex size-7 items-center justify-center md:size-8">
           <XIcon />
