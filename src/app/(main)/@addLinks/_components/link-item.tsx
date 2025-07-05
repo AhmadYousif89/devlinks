@@ -1,36 +1,47 @@
-import { startTransition, memo, useMemo, useState } from "react";
-
-import { CSS } from "@dnd-kit/utilities";
+import { memo, startTransition, useMemo, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import DNDIcon from "public/assets/images/icon-drag-and-drop.svg";
 
+import { cn } from "@/lib/utils";
+import { useLinks } from "../../contexts/links-context";
 import { Link, PlatformKey, PlatformNames } from "@/lib/types";
-import { deleteLink } from "@/app/(main)/actions/links";
 
 import { LinkURL } from "./link-url";
-import { LinkPlatform } from "./link-platform";
 import { Card } from "@/components/ui/card";
+import { LinkPlatform } from "./link-platform";
 import { Button } from "@/components/ui/button";
 import { AnimatedTrashBin } from "@/components/icons/animated-trashbin";
 
-type LinkItemProps = {} & Link;
+type LinkItemProps = {
+  link: Link;
+  shouldHighlight?: boolean;
+};
 
-const areEqual = (prevProps: LinkItemProps, nextProps: LinkItemProps) => {
+const areEqual = (
+  { link, shouldHighlight }: LinkItemProps,
+  { link: nextLink, shouldHighlight: nextLinkShouldHighlight }: LinkItemProps,
+) => {
   return (
-    prevProps.id === nextProps.id &&
-    prevProps.platform === nextProps.platform &&
-    prevProps.order === nextProps.order &&
-    prevProps.url === nextProps.url
+    link.id === nextLink.id &&
+    link.platform === nextLink.platform &&
+    link.order === nextLink.order &&
+    link.url === nextLink.url &&
+    shouldHighlight === nextLinkShouldHighlight
   );
 };
 
-const LinkItemComponent = ({ id, platform, order, url, createdAt }: LinkItemProps) => {
+const LinkItemComponent = ({
+  link: { id, platform, url, order, createdAt },
+  shouldHighlight = false,
+}: LinkItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
-  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState(platform);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { deleteLink } = useLinks();
 
   const parentStyles = useMemo(
     () => ({
@@ -44,15 +55,13 @@ const LinkItemComponent = ({ id, platform, order, url, createdAt }: LinkItemProp
 
   const handleDelete = () => {
     setIsDeleting(true);
-    startTransition(async () => {
-      try {
-        await deleteLink(id);
-      } catch (error) {
-        console.error("Error deleting link:", error);
-      } finally {
-        setIsDeleting(false);
-      }
-    });
+    try {
+      startTransition(() => {
+        deleteLink(id);
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formatedTime = createdAt
@@ -60,16 +69,30 @@ const LinkItemComponent = ({ id, platform, order, url, createdAt }: LinkItemProp
         month: "short",
         day: "numeric",
         year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
       })
     : "";
 
   return (
     <Card
-      className="bg-background min-h-57 gap-3 p-5"
-      title={"Created on " + formatedTime}
-      style={parentStyles}
       ref={setNodeRef}
+      style={parentStyles}
+      aria-invalid={shouldHighlight}
+      title={"Created on " + formatedTime}
+      className={cn(
+        "bg-background min-h-57 gap-3 p-5 transition duration-100",
+        isDeleting ? "pointer-events-none opacity-60" : "",
+      )}
     >
+      {/* Warning banner for highlighted links */}
+      {shouldHighlight && (
+        <div className="border-destructive/50 mb-2 flex items-center gap-2 self-start rounded-md border bg-red-100 px-3 py-2 shadow">
+          <div className="bg-destructive h-2 w-2 animate-pulse rounded-full"></div>
+          <span className="text-sm font-medium text-amber-700">This link is missing a URL</span>
+        </div>
+      )}
+
       <header className="flex h-6 items-center justify-between">
         <div className="flex w-full items-center gap-1">
           <button
@@ -88,10 +111,9 @@ const LinkItemComponent = ({ id, platform, order, url, createdAt }: LinkItemProp
         <div className="flex w-full justify-end">
           <Button
             size="icon"
-            type="button"
             variant="ghost"
-            onClick={handleDelete}
             disabled={isDeleting}
+            onClick={handleDelete}
             className="w-fit select-none"
           >
             {isDeleting ? <AnimatedTrashBin /> : "Remove"}
@@ -109,6 +131,7 @@ const LinkItemComponent = ({ id, platform, order, url, createdAt }: LinkItemProp
           url={url}
           platform={platform as PlatformKey}
           selectedPlatform={selectedPlatform as PlatformNames}
+          shouldHighlight={shouldHighlight}
         />
         <input type="hidden" form="links-form" name={`order-${id}`} value={order} />
       </div>

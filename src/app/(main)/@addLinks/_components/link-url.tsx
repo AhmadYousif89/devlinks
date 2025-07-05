@@ -17,6 +17,7 @@ type LinkURLProps = {
   url: string;
   platform: PlatformNames | PlatformKey;
   selectedPlatform?: PlatformNames;
+  shouldHighlight?: boolean;
 };
 
 const PLATFORM_NAME_TO_KEY = Object.entries(LINKS_DATA).reduce(
@@ -27,9 +28,7 @@ const PLATFORM_NAME_TO_KEY = Object.entries(LINKS_DATA).reduce(
   {} as Record<string, PlatformKey>,
 );
 
-const URL_PATTERNS: Record<PlatformKey, string> = Object.entries(
-  LINKS_DATA,
-).reduce(
+const URL_PATTERNS: Record<PlatformKey, string> = Object.entries(LINKS_DATA).reduce(
   (acc, [key, data]) => {
     acc[key as PlatformKey] = data.pattern || "";
     return acc;
@@ -48,6 +47,7 @@ export const LinkURL = ({
   url,
   platform,
   selectedPlatform,
+  shouldHighlight = false,
 }: LinkURLProps) => {
   const [urlValue, setUrlValue] = useState(url);
   const [error, setError] = useState("");
@@ -152,20 +152,13 @@ export const LinkURL = ({
           onBlur={handleURLBlur}
           onChange={handleURLChange}
           placeholder={placeholder}
-          aria-invalid={!!error}
+          aria-invalid={!!error || shouldHighlight}
           aria-describedby={error ? errorId : undefined}
-          className={`bg-card col-end-1 row-end-1 min-h-12 py-3 pr-4 pl-11 text-sm ${
-            error ? "border-destructive focus-visible:ring-destructive" : ""
-          }`}
+          className="bg-card col-end-1 row-end-1 min-h-12 py-3 pr-4 pl-11 text-sm"
         />
       </div>
       {error && (
-        <p
-          id={errorId}
-          role="alert"
-          aria-live="polite"
-          className="text-destructive mt-1 text-xs"
-        >
+        <p id={errorId} role="alert" aria-live="polite" className="text-destructive mt-1 text-xs">
           {error}
         </p>
       )}

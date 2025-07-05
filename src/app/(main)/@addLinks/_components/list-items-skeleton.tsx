@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const ListItemSkeleton = ({ dataLength }: { dataLength: number }) => {
   return (
-    <ul className="flex flex-col gap-6">
+    <ul className="flex max-h-[777px] flex-col gap-6 overflow-y-auto">
       {Array.from({ length: dataLength }).map((_, index) => (
         <Skeleton role="listitem" key={index} className="h-57 gap-3 p-5">
           <header className="mb-6 flex h-6 items-center justify-between">

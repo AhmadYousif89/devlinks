@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 import {
   closestCenter,
@@ -25,22 +25,24 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { Link } from "@/lib/types";
 import { LinkItem } from "./link-item";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { HighlightBanner } from "@/components/highlight-banner";
+import { useLinks } from "../../contexts/links-context";
+import { WelcomeCard } from "@/components/welcome-card";
+import { useSearchParams } from "next/navigation";
 
 const DNDContext = dynamic(() => import("@dnd-kit/core").then((mod) => mod.DndContext), {
   ssr: false,
 });
 
-type LinkListProps = {
-  links: Link[];
-};
-
-export const LinkList = ({ links }: LinkListProps) => {
-  const [dataLinks, setDataLinks] = useState(links);
+export const LinkList = () => {
   const [activeItem, setActiveItem] = useState<Link | undefined>();
+  const { links, optimisticLinks, setActualLinks } = useLinks();
+  const searchParams = useSearchParams();
 
-  useEffect(() => {
-    setDataLinks(links);
-  }, [links]);
+  const highlightFaultyLinks = useMemo(
+    () => searchParams.get("highlight-links")?.split(",") || [],
+    [searchParams],
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -70,57 +72,77 @@ export const LinkList = ({ links }: LinkListProps) => {
       setActiveItem(undefined);
       if (!over || active.id === over.id) return;
 
-      const activeIdx = dataLinks.findIndex((item) => item.id === active.id);
-      const overIdx = dataLinks.findIndex((item) => item.id === over.id);
+      setActualLinks((currentLinks) => {
+        const activeIdx = currentLinks.findIndex((item) => item.id === active.id);
+        const overIdx = currentLinks.findIndex((item) => item.id === over.id);
 
-      if (activeIdx !== overIdx) {
-        const newLinks = arrayMove(dataLinks, activeIdx, overIdx);
+        if (activeIdx !== overIdx) {
+          const newLinks = arrayMove(currentLinks, activeIdx, overIdx);
+          const updatedLinks = newLinks.map((link, index) => ({
+            ...link,
+            order: index + 1,
+          }));
+          return updatedLinks;
+        }
 
-        const updatedLinks = newLinks.map((link, index) => ({
-          ...link,
-          order: index + 1,
-        }));
-
-        setDataLinks(updatedLinks);
-      }
+        return currentLinks;
+      });
     },
-    [dataLinks],
+    [setActualLinks],
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveItem(undefined);
   }, []);
 
+  if (optimisticLinks.length === 0) return <WelcomeCard />;
+
   return (
-    <ScrollArea className="max-h-[777px]">
-      <DNDContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-        modifiers={[restrictToVerticalAxis]}
-      >
-        <SortableContext
-          items={dataLinks.map((item) => item.id)}
-          strategy={verticalListSortingStrategy}
+    <>
+      {highlightFaultyLinks && highlightFaultyLinks.length > 0 && (
+        <HighlightBanner
+          area="LINKS"
+          title="Links Missing URLs"
+          description={`${highlightFaultyLinks.length} link${highlightFaultyLinks.length > 1 ? "s are" : " is"} missing URLs`}
+        />
+      )}
+      <ScrollArea className="max-h-[777px] overscroll-contain">
+        <DNDContext
+          sensors={sensors}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          onDragCancel={handleDragCancel}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
         >
-          <ul className="flex flex-col gap-6">
-            {dataLinks.map((link) => (
-              <li key={link.id}>
-                <LinkItem {...link} />
-              </li>
-            ))}
-          </ul>
-        </SortableContext>
-        <DragOverlay
-          adjustScale
-          transition={"transform 50ms ease"}
-          style={{ transformOrigin: "center", willChange: "transform" }}
-        >
-          {activeItem ? <LinkItem {...activeItem} /> : null}
-        </DragOverlay>
-      </DNDContext>
-    </ScrollArea>
+          <SortableContext
+            items={optimisticLinks.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <ul className="flex flex-col gap-6">
+              {optimisticLinks.map((link) => (
+                <li key={link.id}>
+                  <LinkItem
+                    link={link}
+                    shouldHighlight={!link.url && highlightFaultyLinks?.includes(link.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </SortableContext>
+          <DragOverlay
+            transition={"transform 100ms ease"}
+            style={{ transformOrigin: "center", willChange: "transform" }}
+          >
+            {activeItem ? (
+              <LinkItem
+                link={activeItem}
+                shouldHighlight={!activeItem.url && highlightFaultyLinks?.includes(activeItem.id)}
+              />
+            ) : null}
+          </DragOverlay>
+        </DNDContext>
+      </ScrollArea>
+    </>
   );
 };
