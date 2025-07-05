@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListItemSkeleton } from "../@addLinks/_components/list-items-skeleton";
 
-export const MainSkeletonWrapper = () => {
+export const MainSkeletonWrapper = ({ linksCount }: { linksCount: number }) => {
   return (
     <main
       className={cn(
@@ -26,13 +27,17 @@ export const MainSkeletonWrapper = () => {
             <Skeleton className="bg-foreground/5 h-11.5 w-full" />
           </div>
 
-          <Skeleton className="bg-foreground/5 flex flex-1 flex-col items-center justify-center gap-2 p-6 md:p-10">
-            <Skeleton className="bg-foreground/5 mb-4 h-20 w-[125px]" />
-            <Skeleton className="bg-foreground/5 mb-2 h-6 w-1/2" />
-            <Skeleton className="bg-foreground/5 h-2 w-full" />
-            <Skeleton className="bg-foreground/5 h-2 w-full" />
-            <Skeleton className="bg-foreground/5 h-2 w-full" />
-          </Skeleton>
+          {linksCount < 1 ? (
+            <Skeleton className="bg-foreground/5 flex flex-1 flex-col items-center justify-center gap-2 p-6 md:p-10">
+              <Skeleton className="bg-foreground/5 mb-4 h-20 w-[125px]" />
+              <Skeleton className="bg-foreground/5 mb-2 h-6 w-1/2" />
+              <Skeleton className="bg-foreground/5 h-2 w-full" />
+              <Skeleton className="bg-foreground/5 h-2 w-full" />
+              <Skeleton className="bg-foreground/5 h-2 w-full" />
+            </Skeleton>
+          ) : (
+            <ListItemSkeleton dataLength={linksCount} />
+          )}
         </div>
         {/* Footer skeleton */}
         <div className="flex justify-end border-t p-4 md:px-10 md:py-6">

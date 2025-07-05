@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Section } from "@/components/layout/section";
 import { MainSkeletonWrapper } from "./skeletons/main-skeleton-wrapper";
+import { useLinks } from "./contexts/links-context";
 
 type Props = {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ export default function Wrapper({ children, slots }: Props) {
   const searchParams = useSearchParams();
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
+  const linksCount = useLinks().links.length;
 
   const minSwipeDistance = 50;
   const viewingSlot = searchParams.get("v");
@@ -61,7 +63,7 @@ export default function Wrapper({ children, slots }: Props) {
   return (
     <>
       {children}
-      <Suspense fallback={<MainSkeletonWrapper />}>
+      <Suspense fallback={<MainSkeletonWrapper linksCount={linksCount} />}>
         <main
           className={cn(
             "@container flex flex-1 p-4 md:p-6 md:pt-0",
