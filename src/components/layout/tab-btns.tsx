@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useOptimistic, startTransition } from "react";
@@ -17,6 +15,12 @@ export const TabButtons = () => {
     startTransition(() => setCurrentSlot(slot));
   };
 
+  const buildTabURL = (tab: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("v", tab);
+    return `/?${params.toString()}`;
+  };
+
   return (
     <div role="tablist" aria-label="Main navigation" className="flex gap-[2px] p-px">
       <Button
@@ -29,7 +33,7 @@ export const TabButtons = () => {
         className="h-10.5 w-18.5 gap-2 md:h-11.5 md:w-fit md:px-6.75 md:py-2.75"
         onClick={() => handleSlotTransition("links")}
       >
-        <Link href="/?v=links">
+        <Link href={buildTabURL("links")}>
           <HeaderLinkIcon className="size-fit" aria-hidden="true" />
           <span className="hidden text-base font-semibold md:inline-block">Links</span>
         </Link>
@@ -44,7 +48,7 @@ export const TabButtons = () => {
         className="h-10.5 w-18.5 gap-2 md:h-11.5 md:w-fit md:px-6.75 md:py-2.75"
         onClick={() => handleSlotTransition("details")}
       >
-        <Link href="/?v=details">
+        <Link href={buildTabURL("details")}>
           <ProfileDetailIcon className="size-fit" aria-hidden="true" />
           <span className="hidden text-base font-semibold md:inline-block">Profile Details</span>
         </Link>
