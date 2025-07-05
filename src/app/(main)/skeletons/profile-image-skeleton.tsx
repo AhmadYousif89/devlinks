@@ -5,11 +5,6 @@ type Props = { inPreviewPage?: boolean };
 
 export const ProfileImageSkeleton = ({ inPreviewPage = false }: Props) => {
   return (
-    <Skeleton
-      className={cn(
-        "bg-border rounded-full",
-        inPreviewPage ? "size-26" : "size-24",
-      )}
-    />
+    <Skeleton className={cn("bg-accent rounded-full", inPreviewPage ? "size-26" : "size-24")} />
   );
 };
