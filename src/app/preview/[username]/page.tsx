@@ -59,7 +59,7 @@ export default async function userPublicPreviewPage({ searchParams }: PageProps)
   );
 }
 
-export async function getUserById(id: string) {
+async function getUserById(id: string) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection<UserDocument>("users");
@@ -86,7 +86,7 @@ export async function getUserById(id: string) {
   }
 }
 
-export async function getUserLinks(id: string) {
+async function getUserLinks(id: string) {
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection<LinkDocument>("links");

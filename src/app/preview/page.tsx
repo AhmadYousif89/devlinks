@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 import { ShareLink } from "./share-link";
 import { GuestSharePrompt } from "./guest-share-prompt";
@@ -11,6 +9,7 @@ import { getLinksCount } from "@/app/(main)/@addLinks/page";
 import { getUserFromSession } from "@/app/(auth)/_lib/session";
 import { LinksPreview } from "@/app/(main)/components/links-preview";
 import { ProfilePreview } from "@/app/(main)/components/profile-preview";
+import { BackToEditor } from "./back-to-editor";
 
 export const metadata: Metadata = {
   title: "Devlinks | Preview",
@@ -30,11 +29,7 @@ export default async function PreviewPage() {
       <header className="md:p-6">
         <Card className="py-4 pr-4 pl-6">
           <nav className="flex items-center justify-between gap-4">
-            <Button asChild variant="secondary" className="h-11.5 w-40">
-              <Link href="/">
-                <span>Back to Editor</span>
-              </Link>
-            </Button>
+            <BackToEditor />
 
             {user ? <ShareLink user={user} /> : <GuestSharePrompt />}
           </nav>
@@ -50,5 +45,3 @@ export default async function PreviewPage() {
     </main>
   );
 }
-
-export const dynamic = "force-dynamic";

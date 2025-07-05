@@ -65,7 +65,7 @@ export const UserPublicLinks = ({ links }: Props) => {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="absolute inset-0 flex items-center"
+                  className="absolute inset-0 flex items-center text-base"
                 >
                   <span className="ml-12">{link.platform}</span>
                 </a>

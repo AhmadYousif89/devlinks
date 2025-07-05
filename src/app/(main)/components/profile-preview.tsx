@@ -15,6 +15,7 @@ const ProfileImage = async ({ inPreviewPage = false }: Props) => {
     <div className={cn("bg-border/40 rounded-full", inPreviewPage ? "size-26" : "size-24")}>
       {user?.image ? (
         <Image
+          priority
           src={user.image}
           width={400}
           height={400}
@@ -35,7 +36,7 @@ const ProfileInfo = async ({ inPreviewPage = false }: Props) => {
 
   return (
     <div className={cn("flex flex-col items-center", user ? "gap-2" : "gap-3.25")}>
-      {user ? (
+      {user && username?.trim() ? (
         <h2
           title={username}
           className={cn(

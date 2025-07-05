@@ -1,9 +1,11 @@
+"use client";
+
 import ArrowRightIcon from "public/assets/images/icon-arrow-right.svg";
 
 import { cn } from "@/lib/utils";
 import { LINKS_DATA } from "@/lib/data";
 import { Button } from "@/components/ui/button";
-import { getLinksFromDB } from "../@addLinks/page";
+import { useLinks } from "../contexts/links-context";
 import { FFIcon } from "@/components/icons/frontendmentor-icon";
 
 const getLinkDataByName = (platformName: string) => {
@@ -21,8 +23,8 @@ const getLinkDataByName = (platformName: string) => {
 
 type Props = { inPreviewPage?: boolean };
 
-export const LinksPreview = async ({ inPreviewPage = false }: Props) => {
-  const links = await getLinksFromDB();
+export const LinksPreview = ({ inPreviewPage = false }: Props) => {
+  const { optimisticLinks } = useLinks();
 
   return (
     <ul
@@ -31,7 +33,7 @@ export const LinksPreview = async ({ inPreviewPage = false }: Props) => {
         inPreviewPage ? "max-h-[600px] overflow-y-auto" : "",
       )}
     >
-      {links.map((link) => {
+      {optimisticLinks.map((link) => {
         const platformData = getLinkDataByName(link.platform);
         if (!platformData) return null;
 
