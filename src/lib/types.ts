@@ -9,7 +9,6 @@ export type LinkDocument = {
   order: number;
   createdAt: Date;
   userId?: string; // For registered users
-  guestSessionId?: string; // For guest users
   expiresAt?: Date; // TTL index field for temp links only
 };
 
@@ -21,18 +20,26 @@ export type Link = {
   createdAt?: Date;
 };
 
+export type DeleteLinkState = {
+  success: boolean;
+  deletedId?: string;
+  error?: string;
+};
+
 export type UserDocument = {
   _id?: ObjectId;
-  email: string;
-  displayEmail: string;
+  email?: string; // Optional for guest users
+  displayEmail?: string;
   image?: string;
   username?: string;
   password?: string; // Optional for guest users
   salt?: string; // Optional for guest users
   createdAt: Date;
   registered: boolean;
-  guestSessionId?: string; // Optional for guest users
-  expiresAt?: Date; // TTL index field for temp links only
+  guestSessionId?: string; // For guest users only
+  expiresAt?: Date; // TTL index field for temp users only
+  isNotified?: boolean; // For guest users - indicates if they've been shown the welcome notification
+  links?: LinkDocument[]; // For guest users only - embedded links
 };
 
 export type User = {
@@ -67,6 +74,7 @@ export type UserProfileDisplay = {
   displayEmail: string;
   image: string;
   registered: boolean;
+  links?: Link[]; // For guest users's embbeded link list
 };
 
 export type PublicUserProfile = {

@@ -6,7 +6,6 @@ const ENVSchema = z.object({
   CURRENT_USER_KEY: z.string(),
   GUEST_SESSION_KEY: z.string(),
   SESSION_EXPIRE_TIME: z.string(),
-  GUEST_LINK_EXPIRE_TIME: z.string(),
   GUEST_SESSION_EXPIRE_TIME: z.string(),
   EXPIRED_NOTIFICATION_TIME: z.string(),
   MONGODB_URI: z.string(),
