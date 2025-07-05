@@ -74,7 +74,7 @@ async function getUserById(id: string) {
     if (!user) return null;
 
     const transformedUser: PublicUserProfile = {
-      displayEmail: user.displayEmail,
+      displayEmail: user.displayEmail || "",
       username: user.username || "",
       image: user.image || "",
     };
