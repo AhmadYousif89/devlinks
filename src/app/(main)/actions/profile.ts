@@ -1,13 +1,14 @@
 "use server";
 
-import { revalidateTag } from "next/cache";
 import { Collection, ObjectId } from "mongodb";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { cache } from "@/lib/cache";
+import { config } from "@/lib/config";
 import connectToDatabase from "@/lib/db";
 import { extractUserNameParts } from "@/lib/utils";
 import { TEST_GUEST_SESSION_EXPIRE_TIME } from "@/lib/constants";
-import { UserDocument, User, UserProfileDisplay } from "@/lib/types";
+import { UserDocument, User, UserProfileDisplay, Link } from "@/lib/types";
 import {
   getGuestSessionId,
   getUserFromSession,
@@ -23,7 +24,6 @@ import { uploadToCloudinary } from "./cloudinary";
 
 async function getUserProfileContext() {
   const user = await getUserFromSession();
-
   if (user?.id && user.registered) {
     return {
       type: "registered" as const,
@@ -33,7 +33,6 @@ async function getUserProfileContext() {
   }
 
   const guestSessionId = await getGuestSessionId();
-
   return {
     type: "guest" as const,
     guestSessionId,
@@ -41,69 +40,75 @@ async function getUserProfileContext() {
   };
 }
 
-const _getCachedProfileData = cache(
-  async (
-    type: "registered" | "guest",
-    userId: string | undefined,
-    userData: User | null,
-    guestSessionId: string | undefined,
-  ) => {
-    // Return registered user data
-    if (type === "registered" && userData && userId) {
-      const [firstName, lastName] = extractUserNameParts(userData.username);
-      const user: UserProfileDisplay = {
-        firstName,
-        lastName,
-        displayEmail: userData.displayEmail || userData.email,
-        image: userData.image || "",
-        registered: true,
-      };
-      return user;
-    }
+export async function getProfileData() {
+  const ctx = await getUserProfileContext();
 
-    // Check for guest user data
-    if (type === "guest" && guestSessionId) {
-      const { db } = await connectToDatabase();
-      const collection = db.collection<Omit<UserDocument, "email">>("users");
-      const guestUser = await collection.findOne({
-        guestSessionId,
-        registered: false,
-      });
+  if (ctx.type === "registered" && ctx.userId) {
+    const user = await _getRegisteredProfileData(ctx.userData);
+    return user;
+  } else if (ctx.type === "guest" && ctx.guestSessionId) {
+    const guest = await _getGuestProfileData(ctx.guestSessionId);
+    return guest;
+  }
 
-      if (guestUser) {
-        const [firstName, lastName] = extractUserNameParts(guestUser.username);
-        const guest: UserProfileDisplay = {
-          firstName,
-          lastName,
-          displayEmail: guestUser.displayEmail || "",
-          image: guestUser.image || "",
-          registered: false,
-        };
-        return guest;
-      }
-    }
+  return null;
+}
 
-    return null;
+const _getRegisteredProfileData = cache(
+  async (user: User) => {
+    const [firstName, lastName] = extractUserNameParts(user.username);
+    const userProfile: UserProfileDisplay = {
+      firstName,
+      lastName,
+      displayEmail: user.displayEmail || user.email,
+      image: user.image || "",
+      registered: true,
+    };
+    return userProfile;
   },
-  ["getProfileData"],
+  ["_getRegisteredProfileData"],
   {
-    revalidate: 300, // 5 minutes
+    revalidate: 300,
     tags: ["profile"],
   },
 );
 
-export async function getProfileData() {
-  const userProfileCtx = await getUserProfileContext();
+const _getGuestProfileData = cache(
+  async (guestSessionId: string) => {
+    const { db } = await connectToDatabase();
+    const collection = db.collection<Omit<UserDocument, "email">>("users");
+    const guestUser = await collection.findOne({
+      guestSessionId,
+      registered: false,
+    });
 
-  const profileData = await _getCachedProfileData(
-    userProfileCtx.type,
-    userProfileCtx.userId,
-    userProfileCtx.userData,
-    userProfileCtx.guestSessionId,
-  );
+    if (!guestUser) return null;
 
-  return profileData;
-}
+    const [firstName, lastName] = extractUserNameParts(guestUser.username);
+    const links: Link[] = (guestUser.links || []).map((link) => ({
+      id: link._id?.toString() || "",
+      platform: link.platform,
+      url: link.url,
+      order: link.order,
+      createdAt: link.createdAt,
+    }));
+
+    const guest: UserProfileDisplay = {
+      firstName,
+      lastName,
+      displayEmail: guestUser.displayEmail || "",
+      image: guestUser.image || "",
+      registered: false,
+      links,
+    };
+    return guest;
+  },
+  ["_getGuestProfileData"],
+  {
+    revalidate: 300,
+    tags: ["profile"],
+  },
+);
 
 export async function updateProfile(
   prevState: ProfileServerState,
@@ -134,11 +139,13 @@ export async function updateProfile(
 async function handleProfileUpdate(data: ProfileFormData) {
   try {
     let image: string = "";
+    let imageUploaded = false;
 
     if (data.image) {
       try {
         console.log("Uploading image to Cloudinary...");
         image = await uploadToCloudinary(data.image);
+        imageUploaded = true;
       } catch (uploadError) {
         console.log("Image upload failed:", uploadError);
         return {
@@ -161,15 +168,15 @@ async function handleProfileUpdate(data: ProfileFormData) {
 
     if (user?.id && user.registered) {
       await collection.updateOne({ _id: new ObjectId(user.id) }, { $set: profileData });
+      revalidatePath("/");
     } else {
       await handleGuestProfileUpdate(profileData, collection);
     }
 
-    revalidateTag("profile");
-
     return {
       success: true,
       message: "Profile updated successfully!",
+      imageUploaded,
     };
   } catch {
     return {
@@ -185,7 +192,11 @@ async function handleGuestProfileUpdate(
 ) {
   const guestSessionId = await getOrCreateGuestSession();
   const createdAt = new Date();
-  const expiresAt = new Date(createdAt.getTime() + TEST_GUEST_SESSION_EXPIRE_TIME);
+  const guestExpireTime =
+    config.NODE_ENV === "production"
+      ? parseInt(config.GUEST_SESSION_EXPIRE_TIME)
+      : TEST_GUEST_SESSION_EXPIRE_TIME;
+  const expiresAt = new Date(createdAt.getTime() + guestExpireTime);
 
   const guestUserData = {
     ...data,
@@ -193,27 +204,28 @@ async function handleGuestProfileUpdate(
     guestSessionId,
     createdAt,
     expiresAt,
+    isNotified: false,
   };
-  // Check if a guest profile already exists with the same guestSessionId
+
   const exGuestUser = await collection.findOne({
     guestSessionId,
     registered: false,
   });
 
+  // Update existing guest user profile
   if (exGuestUser) {
-    // Update existing guest user profile
     try {
       await collection.updateOne(
         { guestSessionId, registered: false },
         {
           $set: {
-            email: guestUserData.displayEmail,
+            displayEmail: guestUserData.displayEmail,
             username: guestUserData.username,
             ...(data.image && { image: data.image }),
           },
         },
       );
-      console.log("✅ Updated guest user profile");
+      console.log("Updated existing guest user profile");
     } catch (error) {
       console.log("Error updating guest user profile:", error);
       return {
@@ -225,7 +237,7 @@ async function handleGuestProfileUpdate(
     // Create new guest user profile
     try {
       await collection.insertOne(guestUserData);
-      console.log("✅ Created new guest user profile");
+      console.log("Created new guest user profile");
     } catch (error) {
       console.error("Error creating guest user profile:", error);
       return {
@@ -234,6 +246,8 @@ async function handleGuestProfileUpdate(
       };
     }
   }
+
+  revalidatePath("/");
 }
 
 export async function transferGuestProfileToUser(userId: string) {
@@ -272,9 +286,28 @@ export async function transferGuestProfileToUser(userId: string) {
       // Delete the guest user profile after successful transfer
       await collection.deleteOne({ guestSessionId, registered: false });
       revalidateTag("profile");
-      console.log(`✅ Transferred profile data to user ${userId}`);
+      console.log(`Transferred profile data to user ${userId}`);
     }
   } catch (error) {
     console.error("Error transferring profile data:", error);
+  }
+}
+
+export async function markGuestAsNotified() {
+  const guestSessionId = await getGuestSessionId();
+  if (!guestSessionId) return;
+
+  try {
+    const { db } = await connectToDatabase();
+    const collection = db.collection<UserDocument>("users");
+
+    await collection.updateOne(
+      { guestSessionId, registered: false },
+      { $set: { isNotified: true } },
+    );
+
+    console.log("Guest marked as notified");
+  } catch (error) {
+    console.error("Error marking guest as notified:", error);
   }
 }
