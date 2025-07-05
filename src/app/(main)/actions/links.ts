@@ -102,6 +102,7 @@ async function createGuestUserLink() {
       const newGuestUser: UserDocument = {
         registered: false,
         guestSessionId,
+        email: `guest-${guestSessionId}@temp.local`,
         createdAt,
         expiresAt, // TTL index will handle expiration
         isNotified: false, // First link, so not notified yet
