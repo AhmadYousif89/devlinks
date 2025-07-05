@@ -1,5 +1,31 @@
 import { z } from "zod";
 
+export const FIELDS = ["firstName", "lastName", "displayEmail"] as const;
+
+export type InputFieldNames = (typeof FIELDS)[number];
+
+export const CUSTOM_VALIDATION_MESSAGES = FIELDS.reduce(
+  (acc, field) => {
+    if (field === "firstName") {
+      acc[field] = {
+        "Can't be empty": "Please enter your first name",
+        "Too long": "First name must be 50 characters or less",
+      };
+    } else if (field === "lastName") {
+      acc[field] = {
+        "Can't be empty": "Please enter your last name",
+        "Too long": "Last name must be 50 characters or less",
+      };
+    } else if (field === "displayEmail") {
+      acc[field] = {
+        "Email not valid": "Please enter a valid email address (e.g., name@example.com)",
+      };
+    }
+    return acc;
+  },
+  {} as Record<InputFieldNames, Record<string, string>>,
+);
+
 export const IMAGE_VALIDATION = {
   MAX_SIZE: 1024 * 1024 * 5, // 5MB
   ALLOWED_TYPES: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
@@ -30,8 +56,6 @@ export const profileSchema = z.object({
 
 export type ProfileFormData = z.infer<typeof profileSchema>;
 
-export type ProfileFieldNames = keyof ProfileFormData;
-
 export type ProfileServerState = {
   success: boolean;
   message: string;
@@ -47,6 +71,7 @@ export type ProfileServerState = {
     displayEmail?: string;
     image?: string | File;
   };
+  imageUploaded?: boolean;
 };
 
 export type ProfileDataToSave = {
