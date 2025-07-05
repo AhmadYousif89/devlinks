@@ -26,8 +26,10 @@ export const ButtonWithFormState = ({
 
   return (
     <Button
+      type="submit"
       aria-busy={isPending}
       disabled={disabled || isPending}
+      aria-disabled={disabled || isPending}
       className={cn("focus-visible:shadow-custom w-fit", className)}
       {...props}
     >
