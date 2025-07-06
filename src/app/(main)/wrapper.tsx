@@ -4,9 +4,11 @@ import { Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { useLinks } from "./contexts/links-context";
 import { Section } from "@/components/layout/section";
 import { MainSkeletonWrapper } from "./skeletons/main-skeleton-wrapper";
-import { useLinks } from "./contexts/links-context";
+import { SectionLinkSkeleton } from "./skeletons/section-links-skeleton";
+import { SectionProfileSkeleton } from "./skeletons/section-profile-skeleton";
 
 type Props = {
   children: React.ReactNode;
@@ -20,8 +22,9 @@ type Props = {
 export default function Wrapper({ children, slots }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const touchStartX = useRef<number>(0);
+
   const touchEndX = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
   const linksCount = useLinks().links.length;
 
   const minSwipeDistance = 50;
@@ -75,13 +78,22 @@ export default function Wrapper({ children, slots }: Props) {
           )}
           <Section
             role="tabpanel"
-            key={viewingSlot}
             onTouchEnd={handleTouchEnd}
             onTouchStart={handleTouchStart}
             id={viewingSlot === "details" ? "details-panel" : "links-panel"}
             aria-labelledby={viewingSlot === "details" ? "details-tab" : "links-tab"}
           >
-            {content}
+            <Suspense
+              fallback={
+                content === links ? (
+                  <SectionLinkSkeleton linksCount={linksCount} />
+                ) : (
+                  <SectionProfileSkeleton />
+                )
+              }
+            >
+              {content}
+            </Suspense>
           </Section>
         </main>
       </Suspense>
