@@ -9,6 +9,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import { Card } from "./ui/card";
+import { createPortal } from "react-dom";
 
 export type DialogRef = {
   open: () => void;
@@ -52,7 +53,6 @@ export const CustomDialog = forwardRef<DialogRef, DialogProps>(
     useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape" && isOpen) {
-          console.log("Escape key pressed, closing dialog");
           closeDialog();
         }
       };
@@ -67,7 +67,6 @@ export const CustomDialog = forwardRef<DialogRef, DialogProps>(
     useEffect(() => {
       const handleClickOutside = (e: MouseEvent) => {
         if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
-          console.log("Clicked outside dialog, closing it");
           closeDialog();
         }
       };
@@ -106,8 +105,8 @@ export const CustomDialog = forwardRef<DialogRef, DialogProps>(
 
     if (!isOpen) return null;
 
-    return (
-      <div className="bg-foreground/25 fixed inset-0 z-50 m-0 flex size-full max-h-none max-w-none items-center justify-center">
+    const dialogPortal = createPortal(
+      <div className="bg-foreground/25 fixed inset-0 z-50 m-0 flex max-h-none max-w-none items-center justify-center">
         <Card
           ref={dialogRef}
           role="dialog"
@@ -115,13 +114,16 @@ export const CustomDialog = forwardRef<DialogRef, DialogProps>(
           aria-modal="true"
           aria-labelledby={ariaLabelby || "dialog-title"}
           aria-describedby={description || "dialog-description"}
-          className={cn("max-w-2xl max-sm:mx-4", className)}
+          className={cn("w-full max-w-2xl max-sm:mx-4", className)}
           {...props}
         >
           {children}
         </Card>
-      </div>
+      </div>,
+      document.body,
     );
+
+    return dialogPortal;
   },
 );
 
