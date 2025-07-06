@@ -46,7 +46,7 @@ export const ShareLink = ({ user }: ShareLinkProps) => {
 
   const handleLinkShare = async () => {
     try {
-      const currentUrl = window.location.href;
+      const currentUrl = window.location.href.split("?")[0]; // Get the base URL without query parameters
       const constructSharableLink = `${currentUrl}/${user?.username}/?id=${user?.id}`;
       await navigator.clipboard?.writeText(constructSharableLink);
 
@@ -97,7 +97,7 @@ export const ShareLink = ({ user }: ShareLinkProps) => {
   return (
     <>
       {!state.isValid && state.missingInfo.length > 0 && (
-        <CustomDialog ref={dialogRef} className="border-destructive/80 border p-5 shadow-lg">
+        <CustomDialog ref={dialogRef} className="border-destructive/80 w-auto border p-5 shadow-lg">
           <WarningCard
             className="relative"
             title="Missing Information"

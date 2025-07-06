@@ -17,9 +17,10 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps) {
   const { username } = await params;
+  const decodedUsername = decodeURIComponent(username);
   return {
-    title: `Devlinks | ${username}`,
-    description: `View ${username}'s public profile.`,
+    title: `Devlinks | ${decodedUsername}`,
+    description: `View ${decodedUsername}'s public profile.`,
   };
 }
 
