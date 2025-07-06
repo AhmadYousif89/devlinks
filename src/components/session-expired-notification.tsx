@@ -10,7 +10,7 @@ import { CustomDialog, DialogRef } from "./dialog-wrapper";
 import { useClearHighlightParams } from "@/hooks/use-clear-highlight-params";
 
 type Props = {
-  getUserSession: Promise<UserSession>;
+  getUserSession: Promise<UserSession | null>;
 };
 
 export default function SessionExpiredNotification({ getUserSession }: Props) {
