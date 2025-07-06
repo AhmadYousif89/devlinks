@@ -1,0 +1,96 @@
+flowchart TD
+
+    A["User Visits App"] --> B["Home Page"]
+    
+    B --> C{"First Time Visitor?"}
+    C -->|Yes| D["Empty Home Page<br/>(No Profile/Links)"]
+    C -->|No| E{"Has Valid Session?"}
+    
+    D --> F{"User Action"}
+    F -->|Create Link| G["Create Guest Session"]
+    F -->|Edit Profile| G
+    
+    G --> H["Guest Welcome Notification<br/>(Auto-termination warning)"]
+    H --> I["Guest Editing Mode"]
+    
+    I --> J{"Guest Action"}
+    J -->|Edit Links| K["Links Editor"]
+    J -->|Edit Profile| L["Profile Editor"]
+    J -->|Preview| M["Preview Page"]
+    
+    K --> N["Save Links"]
+    L --> O["Save Profile"]
+    N --> I
+    O --> I
+    
+    M --> P["Display Devlink Card<br/>(Profile + Links)"]
+    P --> Q{"Try to Share?"}
+    Q -->|Yes| R["Guest Share Modal<br/>(Sign in/Register required)"]
+    Q -->|No| S["Back to Editor"]
+    
+    R --> T{"User Choice"}
+    T -->|Sign In| U["Redirect to Sign In"]
+    T -->|Register| V["Redirect to Sign Up"]
+    T -->|Dismiss| S
+    
+    V --> W["Sign Up Form"]
+    W --> X["Create Account"]
+    X --> Y["Transfer Guest Data to User"]
+    Y --> Z["Redirect to Home<br/>(Registered User)"]
+    
+    Z --> AA["User Home<br/>(1 empty link + profile without image)"]
+    AA --> BB{"User Action"}
+    BB -->|Preview| CC["Preview Page"]
+    BB -->|Edit| DD["Editor Mode"]
+    
+    CC --> EE{"Try to Share?"}
+    EE -->|Yes| FF["Auto-validate Profile/Links"]
+    FF --> GG{"User have a complete Profile/Links?"}
+    GG -->|No| HH["See Validation Flow Diagram"]
+    GG -->|Yes| II["Create Shareable Link<br/>Copy to Clipboard"]
+    
+    II --> UU["Success Toast<br/>(Link created & copied)"]
+    
+    E -->|Valid| VV["Registered User Home"]
+    E -->|Expired| WW["Session Expired Modal"]
+    
+    WW --> XX{"User Choice"}
+    XX -->|Sign In| YY["Redirect to Sign In"]
+    XX -->|Dismiss| ZZ["Modal Closes"]
+    
+    ZZ --> AAA{"User Interacts?"}
+    AAA -->|Yes| BBB["Create New Guest Session"]
+    AAA -->|No| CCC["Stay on Page"]
+    
+    BBB --> H
+    
+    U --> DDD["Sign In Form"]
+    DDD --> EEE{"Sign In Success?"}
+    EEE -->|Yes| VV
+    EEE -->|No| DDD
+    
+    YY --> DDD
+    
+    VV --> BB
+    
+    S --> I
+    DD --> J
+    CCC --> B
+
+    classDef entry fill:#4CAF50,color:#ffffff,stroke:#4CAF50
+    classDef decision fill:#FF9800,color:#ffffff,stroke:#FF9800
+    classDef process fill:#2196F3,color:#ffffff,stroke:#2196F3
+    classDef success fill:#8BC34A,color:#ffffff,stroke:#8BC34A
+    classDef warning fill:#FFC107,color:#000000,stroke:#FFC107
+    classDef error fill:#F44336,color:#ffffff,stroke:#F44336
+    classDef guest fill:#9C27B0,color:#ffffff,stroke:#9C27B0
+    classDef reference fill:#FF5722,color:#ffffff,stroke:#FF5722
+
+    class A,B,D,Z,AA,VV entry
+    class C,E,F,J,Q,T,BB,EE,GG,XX,AAA,EEE decision
+    class G,H,I,K,L,M,N,O,P,W,X,Y,DD,FF,DDD,BBB process
+    class II,UU success
+    class R,WW warning
+    class CCC error
+    class H,I,J,K,L,N,O guest
+    class HH reference

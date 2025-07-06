@@ -1,8 +1,10 @@
 # DevLinks - Link Sharing Application
 
-A modern, full-stack link-sharing platform built with Next.js, allowing users to create, manage, and share their professional links in a beautiful, customizable profile.
+A modern, full-stack link-sharing platform built with Next.js that empowers users to create, manage, and share their professional links in a beautiful, customizable profile. DevLinks provides a seamless experience for both guest users and registered users, with intelligent session management and comprehensive profile validation.
 
 ## 🚀 Features
+
+### Core Features
 
 - **Link Management**: Create, read, update, and delete links with real-time preview
 - **Drag & Drop**: Reorder links with intuitive drag-and-drop functionality
@@ -11,9 +13,61 @@ A modern, full-stack link-sharing platform built with Next.js, allowing users to
 - **Link Validation**: Smart URL validation for different platforms (GitHub, LinkedIn, etc.)
 - **Mobile Mockup**: Real-time preview of how your profile looks on mobile
 - **Share Profile**: Generate a public shareable profile link
-- **User Authentication**: Secure sign-up and sign-in system
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Highlight Banners**: Highlight important links with custom banners upon profile validation fails.
+
+### User Experience Features
+
+- **Guest Mode**: Try the app without registration with automatic guest session creation
+- **Session Management**: Intelligent session handling for both guests and registered users
+- **Profile Validation**: Smart validation system that guides users to complete their profiles
+- **Warning Banners**: Dynamic highlighting of incomplete profile sections
+- **User Authentication**: Secure sign-up and sign-in system with session persistence
+- **Data Migration**: Seamless transfer of guest data to registered accounts
+- **Auto-Termination Warnings**: Clear notifications about guest session expiration
+
+## 📊 User Journey & Flow
+
+This application follows a carefully designed user experience flow that accommodates both guest users and registered users. We have documented the complete user journey using Mermaid diagrams:
+
+### 📋 User Journey Documentation
+
+- **[Main User Journey](./user-journey.mermaid)** - Complete flow from initial visit to profile sharing
+- **[Validation Flow Details](./user-journey-validation-flow.mermaid)** - Detailed validation and error fixing workflows
+
+### 🔍 Understanding the User Flow
+
+**Guest User Experience:**
+
+1. First-time visitors can immediately start creating links or profiles
+2. Automatic guest session creation with termination warnings
+3. Full editing capabilities with preview functionality
+4. Share restrictions that encourage registration
+5. Seamless data transfer when upgrading to registered account
+
+**Registered User Experience:**
+
+1. Persistent sessions with expiration handling
+2. Complete profile validation before sharing
+3. Smart warning banners for incomplete sections
+4. Flexible editing workflow (links or profile first)
+5. Successful sharing with clipboard integration
+
+**Session Management:**
+
+- Guest sessions with auto-termination warnings
+- Expired session recovery options
+- Seamless transition between guest and registered states
+
+### 🎨 Visual Flow Elements
+
+The user journey diagrams use color-coded elements for clarity:
+
+- 🟢 **Green**: Entry points and main pages
+- 🟠 **Orange**: Decision points and user choices
+- 🔵 **Blue**: Process steps and actions
+- 🟣 **Purple**: Guest-specific functionality
+- 🟡 **Yellow**: Warning states and notifications
+- 🟢 **Light Green**: Success states and completions
 
 ## 🛠️ Tech Stack
 
@@ -146,6 +200,25 @@ devlinks/
 
 ## 🎯 Usage
 
+### Getting Started
+
+**For New Users:**
+
+1. Visit the application and land on the home page
+2. Start creating links or editing your profile (automatic guest session)
+3. Receive a welcome notification about guest session limitations
+4. Edit your profile and links in any order you prefer
+5. Preview your DevLinks profile to see how it looks
+6. When ready to share, sign up to unlock sharing features
+
+**For Registered Users:**
+
+1. Sign in to access your saved profile and links
+2. Edit your profile and links with full functionality
+3. Use the preview feature to validate your profile
+4. Fix any missing information using the guided validation system
+5. Share your complete DevLinks profile with the world
+
 ### Managing Links
 
 1. Click "Add new link" to create a link
@@ -163,9 +236,15 @@ devlinks/
 
 ### Sharing Your Profile
 
-1. Click "Preview" to see your public profile and wait for a profile validation
-2. Click "Share Link" and see if you have some missing information
-3. Start sharing your personalized DevLinks profile with the world!
+1. Click "Preview" to see your public profile
+2. The system automatically validates your profile and links
+3. If information is missing, you'll see a warning modal with options:
+   - **Back to Editor**: Fix missing information with guided banners
+   - **Share Anyway**: Share your profile as-is
+4. Choose your preferred tab (Links or Profile) to fix issues
+5. Warning banners will guide you to missing information
+6. Once complete, return to preview and share your profile
+7. Success! Your shareable link is created and copied to clipboard
 
 ## 🚦 Scripts
 
@@ -175,6 +254,18 @@ devlinks/
 - `npm run lint` - Run ESLint for code quality
 
 ## 🌟 Key Features Implementation
+
+### Guest Session Management
+
+Intelligent guest session creation that allows users to try the app without registration, with clear warnings about session limitations and automatic data transfer upon registration.
+
+### Smart Validation System
+
+Comprehensive validation that guides users through completing their profiles with dynamic warning banners and flexible editing workflows.
+
+### Flexible User Flow
+
+Users can choose their own path when fixing validation issues - start with links or profile, completely user-driven experience.
 
 ### Drag & Drop
 
@@ -194,7 +285,7 @@ Cloudinary integration for optimized image upload and delivery.
 
 ### Authentication
 
-Custom authentication system with session management for guest and user session.
+Enhanced authentication system with session management for both guest and registered users, including session expiration handling and data migration.
 
 ### Preview Validation
 
@@ -206,7 +297,7 @@ Mobile-first approach with Tailwind CSS for consistent experience across devices
 
 ## 📄 License
 
-This project is licensed under the BSD License - see the [Licence](LICENCE) file for details.
+This project is licensed under the BSD License - see the [Licence](Licence) file for details.
 
 ## 🤝 Contributing
 

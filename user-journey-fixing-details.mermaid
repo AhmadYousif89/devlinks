@@ -1,0 +1,52 @@
+flowchart TD
+    A["Warning Modal<br/>(Missing Profile/Links Info)"] --> B{"User Choice"}
+    B -->|Back to Editor| C["Editor with Warning Banners"]
+    B -->|Share Anyway| D["Create Shareable Link<br/>Copy to Clipboard"]
+    
+    C --> E{"User Chooses Tab"}
+    E -->|Links Tab| F["Links Editor"]
+    E -->|Profile Tab| G["Profile Editor"]
+    
+    %% Links Flow
+    F --> H["Links Warning Banner<br/>(Highlighting faulty links)"]
+    H --> I["Fix Missing URL"]
+    I --> J["Save Link Form"]
+    J --> K["Links Warning Banner Disappears"]
+    K --> L["Navigate to Preview"]
+    L --> M["Click Share Button"]
+    M --> N["Success Toast<br/>(Link created & copied)"]
+    
+    %% Profile Flow  
+    G --> O["Profile Warning Banner<br/>(Highlighting missing image)"]
+    O --> P["Upload Image"]
+    P --> Q["Upload Modal<br/>(Processing...)"]
+    Q --> R["Upload Complete"]
+    R --> S["Profile Warning Banner Disappears"]
+    S --> T["Navigate to Preview"]
+    T --> U["Click Share Button"]
+    U --> V["Success Toast<br/>(Link created & copied)"]
+    
+    %% Back to editor flow
+    K --> W{"Continue Editing?"}
+    W -->|Yes, fix profile too| G
+    W -->|No, go to preview| L
+    
+    S --> X{"Continue Editing?"}
+    X -->|Yes, fix links too| F
+    X -->|No, go to preview| T
+    
+    D --> Y["Success Toast<br/>(Link created & copied)"]
+
+    classDef decision fill:#FF9800,color:#ffffff,stroke:#FF9800
+    classDef process fill:#2196F3,color:#ffffff,stroke:#2196F3
+    classDef success fill:#8BC34A,color:#ffffff,stroke:#8BC34A
+    classDef warning fill:#FFC107,color:#000000,stroke:#FFC107
+    classDef linksFlow fill:#E3F2FD,color:#000000,stroke:#1976D2
+    classDef profileFlow fill:#F3E5F5,color:#000000,stroke:#7B1FA2
+
+    class B,E,W,X decision
+    class C,F,G,I,J,P,Q,R,L,T,M,U process
+    class D,N,V,Y success
+    class A,H,O warning
+    class F,H,I,J,K,L,M,N linksFlow
+    class G,O,P,Q,R,S,T,U,V profileFlow
