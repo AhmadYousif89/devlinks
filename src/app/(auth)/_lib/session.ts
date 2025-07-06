@@ -12,7 +12,13 @@ import {
 import { cache } from "@/lib/cache";
 import { config } from "@/lib/config";
 import connectToDatabase from "@/lib/db";
-import { SessionExpirationDocument, User, UserDocument, UserSessionDocument } from "@/lib/types";
+import {
+  User,
+  UserSession,
+  UserDocument,
+  UserSessionDocument,
+  SessionExpirationDocument,
+} from "@/lib/types";
 
 // Generate temporary session ID for guest users
 export async function getOrCreateGuestSession() {
@@ -64,8 +70,8 @@ export async function createUserSession(userId: string) {
     const session: UserSessionDocument = {
       sessionId,
       userId,
-      createdAt, // Now
-      expiresAt, // After 5 minutes
+      createdAt,
+      expiresAt,
     };
 
     const result = await sessionsCollection.insertOne(session);
@@ -81,8 +87,8 @@ export async function createUserSession(userId: string) {
     const expirationRecord: SessionExpirationDocument = {
       userId,
       sessionId,
-      sessionExpiredAt: expiresAt, // After 5 minutes
-      expiresAt: new Date(expiresAt.getTime() + notificationExpireTime), // After 5 minutes + 2 minute
+      sessionExpiredAt: expiresAt,
+      expiresAt: new Date(expiresAt.getTime() + notificationExpireTime),
     };
 
     await expirationsCollection.insertOne(expirationRecord);
@@ -96,7 +102,6 @@ export async function createUserSession(userId: string) {
       path: "/",
     });
 
-    // sessionExpireTime + notificationExpireTime
     const currentUserMaxAge = (sessionExpireTime + notificationExpireTime) / 1000;
 
     cookieStore.set(config.CURRENT_USER_KEY, userId, {
@@ -118,30 +123,10 @@ export async function getAuthData() {
     const sessionId = cookieStore.get(config.USER_SESSION_KEY)?.value;
     const currentUserId = cookieStore.get(config.CURRENT_USER_KEY)?.value;
 
-    try {
-      const { db } = await connectToDatabase();
-      const expirationsCollection = db.collection("session_expirations");
-
-      const now = new Date();
-      const expiredSession = await expirationsCollection.findOne({
-        userId: currentUserId,
-        sessionExpiredAt: { $lte: now },
-        expiresAt: { $gt: now },
-      });
-
-      if (expiredSession) {
-        return { expired: true, userId: currentUserId };
-      }
-    } catch (error) {
-      console.error("Error checking expired session in middleware:", error);
-    }
-
-    if (!sessionId) return null;
-
     // Get session and user data from cache
-    const result = await _getCachedSessionAndUser(sessionId);
+    const result = await _getCachedSessionAndUser(sessionId, currentUserId);
     // If session is expired or deleted on the DB return expired status
-    if (result.expired) return { expired: true };
+    if (result && result.expired) return { expired: true };
 
     return result;
   } catch (error) {
@@ -160,7 +145,7 @@ export async function getUserFromSession() {
   return auth.user;
 }
 
-export async function getUserSession() {
+export async function getUserSession(): Promise<UserSession | null> {
   const auth = await getAuthData();
 
   if (!auth) return null;
@@ -215,32 +200,56 @@ export async function clearSession() {
 }
 
 const _getCachedSessionAndUser = cache(
-  async (sessionId: string) => {
+  async (sessionId: string | undefined, currentUserId: string | undefined) => {
     const { db } = await connectToDatabase();
-    const usersCollection = db.collection<UserDocument>("users");
-    const sessionsCollection = db.collection<UserSessionDocument>("sessions");
-    const session = await sessionsCollection.findOne<UserSessionDocument>({
-      sessionId,
-    });
 
-    if (!session) return { expired: true };
+    try {
+      const expirationsCollection = db.collection("session_expirations");
+      const now = new Date();
+      const expiredSession = await expirationsCollection.findOne({
+        userId: currentUserId,
+        sessionExpiredAt: { $lte: now },
+        expiresAt: { $gt: now },
+      });
 
-    const user = await usersCollection.findOne({
-      _id: new ObjectId(session.userId),
-    });
+      if (expiredSession) {
+        return { expired: true, userId: currentUserId };
+      }
+    } catch (error) {
+      console.error("Error checking expired session in middleware:", error);
+    }
 
-    if (!user) return { expired: true };
+    if (!sessionId) return null;
 
-    const transformedUser: User = {
-      id: user._id.toString(),
-      email: user.email || "",
-      displayEmail: user.displayEmail || user.email || "",
-      image: user.image || "",
-      username: user.username || "",
-      registered: user.registered,
-    };
+    try {
+      const sessionsCollection = db.collection<UserSessionDocument>("sessions");
+      const session = await sessionsCollection.findOne<UserSessionDocument>({
+        sessionId,
+      });
 
-    return { session, user: transformedUser };
+      if (!session) return { expired: true };
+
+      const usersCollection = db.collection<UserDocument>("users");
+      const user = await usersCollection.findOne({
+        _id: new ObjectId(session.userId),
+      });
+
+      if (!user) return { expired: true };
+
+      const transformedUser: User = {
+        id: user._id.toString(),
+        email: user.email || "",
+        displayEmail: user.displayEmail || user.email || "",
+        image: user.image || "",
+        username: user.username || "",
+        registered: user.registered,
+      };
+
+      return { session, user: transformedUser };
+    } catch (e) {
+      console.log("Error fetching session and user:", e);
+      return { expired: true };
+    }
   },
   ["getSessionAndUser"],
   {
