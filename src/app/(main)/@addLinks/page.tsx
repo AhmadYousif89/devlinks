@@ -6,12 +6,12 @@ import { LinkDocument } from "@/lib/types";
 import { getProfileData } from "../actions/profile";
 import { getUserFromSession, getUserSession } from "@/app/(auth)/_lib/session";
 import { createNewLink } from "@/app/(main)/actions/links";
+import { Spinner } from "@/components/icons/spinner";
 
 import { LinkList } from "./_components/link-list";
 import { LinksFormWrapper } from "./_components/links-form-wrapper";
-import { ListItemSkeleton } from "./_components/list-items-skeleton";
+import { ListItemSkeleton } from "../skeletons/list-items-skeleton";
 import { ButtonWithFormState } from "@/components/button-with-formstate";
-import { Spinner } from "@/components/icons/spinner";
 
 export default async function AddLinksSlot() {
   const count = await getLinksCount();
@@ -39,7 +39,7 @@ export default async function AddLinksSlot() {
           </form>
         </div>
         <div className="flex basis-full flex-col">
-          <Suspense fallback={<ListItemSkeleton dataLength={count} />}>
+          <Suspense fallback={<ListItemSkeleton count={count} />}>
             <LinkList />
           </Suspense>
         </div>

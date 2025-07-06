@@ -69,7 +69,7 @@ export function LinksProvider({
     setActualLinks(initialLinks);
   }, [initialLinks, setActualLinks]);
 
-  // Function to update URL params when a link is deleted immediately
+  // Function to immediately update URL params when a link is deleted
   // This function checks if the "highlight-links" param exists and updates it accordingly
   const updateUrlParams = useCallback(
     (deletedId: string) => {
@@ -88,7 +88,6 @@ export function LinksProvider({
         }
 
         const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-        console.log("Updating URL params:", newUrl);
         router.replace(newUrl);
         return { updated: true, previousUrl };
       }
@@ -114,7 +113,6 @@ export function LinksProvider({
         toast.error("Link not found");
         return;
       }
-
       // Store the link for potential revert
       deletedLinksRef.current.set(id, linkToDelete);
       // Add to pending deletes
@@ -123,13 +121,14 @@ export function LinksProvider({
       startTransition(() => {
         setOptimisticLinks({ type: "DELETE", id });
       });
+
       const urlResult = updateUrlParams(id);
 
       try {
         const result = await deleteLink({ success: false, deletedId: "", error: "" }, id);
 
         if (result.success) {
-          // Confirm the delete and update the actual links and URL params if present
+          // Confirm the delete and update the actual links
           setActualLinks((currentLinks) => currentLinks.filter((link) => link.id !== id));
           deletedLinksRef.current.delete(id);
           toast.success("Link deleted successfully");
