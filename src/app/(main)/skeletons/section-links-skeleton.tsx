@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { ListItemSkeleton } from "./list-items-skeleton";
 
-export const SectionLinkSkeleton = ({ linksCount }: { linksCount: number }) => {
+export const SectionLinksSkeleton = ({ linksCount }: { linksCount: number }) => {
   return (
     <Skeleton className="bg-foreground/5 flex flex-col justify-between">
       <div className="flex basis-full flex-col p-6 md:p-10">

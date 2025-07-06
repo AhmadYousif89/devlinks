@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SectionLinkSkeleton } from "./section-links-skeleton";
+import { SectionLinksSkeleton } from "./section-links-skeleton";
 
 export const MainSkeletonWrapper = ({ linksCount }: { linksCount: number }) => {
   return (
@@ -15,7 +15,7 @@ export const MainSkeletonWrapper = ({ linksCount }: { linksCount: number }) => {
         <Skeleton className="bg-foreground/5 h-[633px] w-[308px] !rounded-4xl" />
       </Skeleton>
 
-      <SectionLinkSkeleton linksCount={linksCount} />
+      <SectionLinksSkeleton linksCount={linksCount} />
     </main>
   );
 };

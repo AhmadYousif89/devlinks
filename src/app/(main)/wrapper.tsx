@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useLinks } from "./contexts/links-context";
 import { Section } from "@/components/layout/section";
 import { MainSkeletonWrapper } from "./skeletons/main-skeleton-wrapper";
-import { SectionLinkSkeleton } from "./skeletons/section-links-skeleton";
+import { SectionLinksSkeleton } from "./skeletons/section-links-skeleton";
 import { SectionProfileSkeleton } from "./skeletons/section-profile-skeleton";
 
 type Props = {
@@ -85,8 +85,8 @@ export default function Wrapper({ children, slots }: Props) {
           >
             <Suspense
               fallback={
-                content === links ? (
-                  <SectionLinkSkeleton linksCount={linksCount} />
+                viewingSlot === "links" ? (
+                  <SectionLinksSkeleton linksCount={linksCount} />
                 ) : (
                   <SectionProfileSkeleton />
                 )
