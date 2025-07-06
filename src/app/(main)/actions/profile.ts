@@ -157,8 +157,33 @@ async function handleProfileUpdate(data: ProfileFormData) {
     }
     // Check if user is authenticated
     const user = await getUserFromSession();
+    if (!user) {
+      return {
+        success: false,
+        message: "User not authenticated.",
+      };
+    }
+
     const { db } = await connectToDatabase();
     const collection = db.collection<Omit<UserDocument, "email">>("users");
+
+    //  Compare the current user data with the new data and update only if there are changes
+    const currentUser = await collection.findOne({ _id: new ObjectId(user.id) });
+    const shouldUpdate = Object.keys(data).some((key) => {
+      const [firstName, lastName] = extractUserNameParts(currentUser?.username || "");
+      if (key === "firstName") return data.firstName !== firstName;
+      if (key === "lastName") return data.lastName !== lastName;
+      if (key === "displayEmail") return data.displayEmail !== currentUser?.displayEmail;
+      if (key === "image" && imageUploaded) return image !== currentUser?.image;
+    });
+
+    if (!shouldUpdate) {
+      return {
+        success: true,
+        message: "No changes detected. Profile not updated.",
+        imageUploaded,
+      };
+    }
 
     const profileData: ProfileDataToSave = {
       username: data.firstName + " " + data.lastName,
@@ -175,7 +200,7 @@ async function handleProfileUpdate(data: ProfileFormData) {
 
     return {
       success: true,
-      message: "Profile updated successfully!",
+      message: "Your changes have been successfully saved!",
       imageUploaded,
     };
   } catch {

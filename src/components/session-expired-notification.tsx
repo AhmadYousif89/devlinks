@@ -5,9 +5,9 @@ import { use, useEffect, useRef } from "react";
 
 import { Button } from "./ui/button";
 import { UserSession } from "@/lib/types";
+import { WarningCard } from "./layout/warning";
 import { CustomDialog, DialogRef } from "./dialog-wrapper";
 import { useClearHighlightParams } from "@/hooks/use-clear-highlight-params";
-import { WarningCard } from "./layout/warning";
 
 type Props = {
   getUserSession: Promise<UserSession>;
@@ -38,7 +38,7 @@ export default function SessionExpiredNotification({ getUserSession }: Props) {
       ref={dialogRef}
       ariaLabelby="Session Expired"
       description="Your session has expired. Please login again to continue where you left off."
-      className="border-destructive/80 border p-5 shadow-lg"
+      className="border-destructive/80 w-auto border p-5 shadow-lg"
     >
       <WarningCard
         title="Session Expired"

@@ -58,15 +58,11 @@ export type UserSessionDocument = {
   expiresAt: Date;
 };
 
-export type UserSession =
-  | {
-      sessionId?: string;
-      userId?: string;
-      createdAt?: string;
-      expiresAt?: string;
-    }
-  | { expired: true }
-  | null;
+export type UserSession = {
+  sessionId?: string;
+  userId?: string;
+  expired?: boolean;
+};
 
 export type UserProfileDisplay = {
   firstName: string;

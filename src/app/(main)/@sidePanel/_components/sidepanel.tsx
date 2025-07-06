@@ -5,8 +5,8 @@ import PhoneMockup from "public/assets/images/illustration-phone-mockup.svg";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LinksPreview } from "../../components/links-preview";
-import { LinksSkeleton } from "../../skeletons/links-skeleton";
 import { ProfilePreview } from "../../components/profile-preview";
+import { SidePanelLinkSkeleton } from "../../skeletons/sidepanel-links-skeleton";
 
 export const SidePanel = async () => {
   return (
@@ -21,7 +21,7 @@ export const SidePanel = async () => {
                 <li key={index} className="bg-border/40 h-11 rounded-md" />
               ))}
             </ul>
-            <Suspense fallback={<LinksSkeleton />}>
+            <Suspense fallback={<SidePanelLinkSkeleton />}>
               <LinksPreview />
             </Suspense>
           </div>
