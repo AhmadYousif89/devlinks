@@ -157,45 +157,50 @@ async function handleProfileUpdate(data: ProfileFormData) {
     }
     // Check if user is authenticated
     const user = await getUserFromSession();
-    if (!user) {
-      return {
-        success: false,
-        message: "User not authenticated.",
-      };
-    }
-
     const { db } = await connectToDatabase();
     const collection = db.collection<Omit<UserDocument, "email">>("users");
-
-    //  Compare the current user data with the new data and update only if there are changes
-    const currentUser = await collection.findOne({ _id: new ObjectId(user.id) });
-    const shouldUpdate = Object.keys(data).some((key) => {
-      const [firstName, lastName] = extractUserNameParts(currentUser?.username || "");
-      if (key === "firstName") return data.firstName !== firstName;
-      if (key === "lastName") return data.lastName !== lastName;
-      if (key === "displayEmail") return data.displayEmail !== currentUser?.displayEmail;
-      if (key === "image" && imageUploaded) return image !== currentUser?.image;
-    });
-
-    if (!shouldUpdate) {
-      return {
-        success: true,
-        message: "No changes detected. Profile not updated.",
-        imageUploaded,
-      };
-    }
 
     const profileData: ProfileDataToSave = {
       username: data.firstName + " " + data.lastName,
       displayEmail: data.displayEmail ?? "",
-      ...(image && { image }),
+      ...(image && imageUploaded && { image }),
     };
 
     if (user?.id && user.registered) {
-      await collection.updateOne({ _id: new ObjectId(user.id) }, { $set: profileData });
+      try {
+        //  Compare the current user data with the new data and update only if there are changes
+        const currentUser = await collection.findOne({ _id: new ObjectId(user.id) });
+        if (!currentUser) {
+          return {
+            success: false,
+            message: "User not found. Please try again.",
+          };
+        }
+
+        const shouldUpdate = hasProfileChanges(profileData, currentUser, imageUploaded);
+
+        if (!shouldUpdate) {
+          return {
+            success: true,
+            message: "No changes detected. Profile not updated.",
+            imageUploaded,
+          };
+        }
+
+        await collection.updateOne({ _id: new ObjectId(user.id) }, { $set: profileData });
+      } catch (error) {
+        console.log("Error updating registered user profile:", error);
+        return {
+          success: false,
+          message: "Failed to update profile. Please try again.",
+        };
+      }
       revalidatePath("/");
     } else {
-      await handleGuestProfileUpdate(profileData, collection);
+      const result = await handleGuestProfileUpdate(profileData, collection);
+      if (result && !result.success) {
+        return result;
+      }
     }
 
     return {
@@ -239,6 +244,17 @@ async function handleGuestProfileUpdate(
 
   // Update existing guest user profile
   if (exGuestUser) {
+    // Only update fields that are provided in the data
+    const shouldUpdate = hasProfileChanges(guestUserData, exGuestUser, !!data.image);
+
+    if (!shouldUpdate) {
+      return {
+        success: true,
+        message: "No changes detected. Profile not updated.",
+        imageUploaded: !!data.image,
+      };
+    }
+
     try {
       await collection.updateOne(
         { guestSessionId, registered: false },
@@ -335,4 +351,17 @@ export async function markGuestAsNotified() {
   } catch (error) {
     console.error("Error marking guest as notified:", error);
   }
+}
+
+function hasProfileChanges(
+  newData: ProfileDataToSave,
+  existingData: Omit<UserDocument, "email"> | null,
+  imageUploaded: boolean,
+): boolean {
+  return Object.keys(newData).some((key) => {
+    if (key === "username") return newData.username !== existingData?.username;
+    if (key === "displayEmail") return newData.displayEmail !== existingData?.displayEmail;
+    if (key === "image" && imageUploaded) return newData.image !== existingData?.image;
+    return false;
+  });
 }
