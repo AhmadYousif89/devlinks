@@ -50,7 +50,7 @@ export const MainHeader = () => {
           >
             <Link href={buildPreviewURL()} className="flex size-full items-center justify-center">
               <PreviewIcon className="size-fit md:hidden" />
-              <span className="hidden md:block">Preview</span>
+              <span className="hidden text-base md:block">Preview</span>
             </Link>
           </Button>
         </nav>

@@ -132,7 +132,7 @@ export const ShareLink = ({ user }: ShareLinkProps) => {
           </WarningCard>
         </CustomDialog>
       )}
-      <Button disabled={isPending} onClick={handleSubmit} className="h-11.5 w-40">
+      <Button disabled={isPending} onClick={handleSubmit} className="h-11.5 w-40 text-base">
         {isPending ? "Validating..." : "Share Link"}
       </Button>
     </>

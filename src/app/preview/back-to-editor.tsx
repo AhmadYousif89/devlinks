@@ -17,7 +17,7 @@ export const BackToEditor = () => {
   return (
     <Button asChild variant="secondary" className="h-11.5 w-40">
       <Link href={buildURL()}>
-        <span>Back to Editor</span>
+        <span className="text-base">Back to Editor</span>
       </Link>
     </Button>
   );
