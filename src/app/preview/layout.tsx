@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getLinksFromDB } from "../(main)/@addLinks/page";
 import { LinksProvider } from "../(main)/contexts/links-context";
-import { PreviewPageSkeleton } from "./preview-page-skeleton";
+import { PreviewPageSkeleton } from "./skeletons/preview.skeleton";
 
 type PreviewLayoutProps = {
   children: React.ReactNode;

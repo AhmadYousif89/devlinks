@@ -7,7 +7,7 @@ import LinkIcon from "public/assets/images/icon-link.svg";
 import { LINKS_DATA } from "@/lib/data";
 import { normalizeURL } from "@/lib/utils";
 import { PlatformKey, PlatformNames } from "@/lib/types";
-import { createLinkSchema } from "@/app/(main)/schema/link-schema";
+import { createLinkSchema } from "@/app/(main)/schema/link.schema";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

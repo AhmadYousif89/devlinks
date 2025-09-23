@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { ListItemSkeleton } from "./list-items-skeleton";
+import { ListItemSkeleton } from "./list-items.skeleton";
 
 export const SectionLinksSkeleton = ({ linksCount }: { linksCount: number }) => {
   return (

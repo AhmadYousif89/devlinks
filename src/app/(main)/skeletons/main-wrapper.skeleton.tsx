@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SectionLinksSkeleton } from "./section-links-skeleton";
+import { SectionLinksSkeleton } from "./section-links.skeleton";
 
 export const MainSkeletonWrapper = ({ linksCount }: { linksCount: number }) => {
   return (

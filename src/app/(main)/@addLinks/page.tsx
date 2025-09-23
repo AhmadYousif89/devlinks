@@ -10,7 +10,7 @@ import { Spinner } from "@/components/icons/spinner";
 
 import { LinkList } from "./_components/link-list";
 import { LinksFormWrapper } from "./_components/links-form-wrapper";
-import { ListItemSkeleton } from "../skeletons/list-items-skeleton";
+import { ListItemSkeleton } from "../skeletons/list-items.skeleton";
 import { ButtonWithFormState } from "@/components/button-with-formstate";
 
 export default async function AddLinksSlot() {

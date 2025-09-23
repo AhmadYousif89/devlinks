@@ -19,7 +19,7 @@ import {
   ProfileFormData,
   profileSchema,
   ProfileDataToSave,
-} from "../schema/profile-schema";
+} from "../schema/profile.schema";
 import { uploadToCloudinary } from "./cloudinary";
 
 async function getUserProfileContext() {

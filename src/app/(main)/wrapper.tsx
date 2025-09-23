@@ -6,9 +6,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLinks } from "./contexts/links-context";
 import { Section } from "@/components/layout/section";
-import { MainSkeletonWrapper } from "./skeletons/main-skeleton-wrapper";
-import { SectionLinksSkeleton } from "./skeletons/section-links-skeleton";
-import { SectionProfileSkeleton } from "./skeletons/section-profile-skeleton";
+import { MainSkeletonWrapper } from "./skeletons/main-wrapper.skeleton";
+import { SectionLinksSkeleton } from "./skeletons/section-links.skeleton";
+import { SectionProfileSkeleton } from "./skeletons/section-profile.skeleton";
 
 type Props = {
   children: React.ReactNode;

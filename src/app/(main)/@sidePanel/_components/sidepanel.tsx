@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LinksPreview } from "../../components/links-preview";
 import { ProfilePreview } from "../../components/profile-preview";
-import { SidePanelLinkSkeleton } from "../../skeletons/sidepanel-links-skeleton";
+import { SidePanelLinkSkeleton } from "../../skeletons/sidepanel-links.skeleton";
 
 export const SidePanel = async () => {
   return (

@@ -9,7 +9,7 @@ import SaveIcon from "public/assets/images/icon-changes-saved.svg";
 import { toast } from "sonner";
 import { UserProfileDisplay, UserSession } from "@/lib/types";
 import { updateProfile } from "@/app/(main)/actions/profile";
-import { ProfileServerState } from "../../schema/profile-schema";
+import { ProfileServerState } from "../../schema/profile.schema";
 
 import { ProfileInputFields } from "./input-fields";
 import { ImageFieldRef, ProfileImageField } from "./image-field";

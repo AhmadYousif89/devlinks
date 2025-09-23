@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 
 import { getProfileData } from "../actions/profile";
-import { ProfileInfoSkeleton } from "../skeletons/profile-info-skeleton";
-import { ProfileImageSkeleton } from "../skeletons/profile-image-skeleton";
+import { ProfileInfoSkeleton } from "../skeletons/profile-info.skeleton";
+import { ProfileImageSkeleton } from "../skeletons/profile-image.skeleton";
 
 type Props = { inPreviewPage?: boolean };
 

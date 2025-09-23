@@ -11,7 +11,7 @@ import {
   IMAGE_VALIDATION,
   ImageTypes,
   ProfileServerState,
-} from "@/app/(main)/schema/profile-schema";
+} from "@/app/(main)/schema/profile.schema";
 
 export type ImageFieldRef = {
   getSelectedFile: () => File | null;

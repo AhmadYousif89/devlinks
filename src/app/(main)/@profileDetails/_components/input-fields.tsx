@@ -6,7 +6,7 @@ import {
   ProfileServerState,
   InputFieldNames,
   profileSchema,
-} from "@/app/(main)/schema/profile-schema";
+} from "@/app/(main)/schema/profile.schema";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
