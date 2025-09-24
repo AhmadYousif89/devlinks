@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Link } from "@/lib/types";
-import { deleteLink } from "@/app/(main)/actions/links";
+import { deleteLink } from "../@addLinks/_actions/delete";
 
 type OptimisticAction = {
   type: "DELETE" | "ADD";

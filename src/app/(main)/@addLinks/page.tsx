@@ -3,15 +3,15 @@ import { Suspense } from "react";
 import { cache } from "@/lib/cache";
 import connectToDatabase from "@/lib/db";
 import { LinkDocument } from "@/lib/types";
-import { getProfileData } from "../actions/profile";
+import { createNewLink } from "./_actions/create";
+import { getProfileData } from "../@profileDetails/_dal/read.dal";
 import { getUserFromSession, getUserSession } from "@/app/(auth)/_lib/session";
-import { createNewLink } from "@/app/(main)/actions/links";
-import { Spinner } from "@/components/icons/spinner";
 
-import { LinkList } from "./_components/link-list";
+import { Spinner } from "@/components/icons/spinner";
+import { ButtonWithFormState } from "@/components/button-with-formstate";
 import { LinksFormWrapper } from "./_components/links-form-wrapper";
 import { ListItemSkeleton } from "../skeletons/list-items.skeleton";
-import { ButtonWithFormState } from "@/components/button-with-formstate";
+import { LinkList } from "./_components/link-list";
 
 export default async function AddLinksSlot() {
   const count = await getLinksCount();
