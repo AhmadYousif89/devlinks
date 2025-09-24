@@ -4,8 +4,11 @@ import Form from "next/form";
 import { startTransition, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { updateLinkForm } from "../../actions/links";
+import { toast } from "sonner";
+import { updateLinkForm } from "../_actions/update";
 import { useClearHighlightParams } from "@/hooks/use-clear-highlight-params";
+
+import SaveIcon from "public/assets/images/icon-changes-saved.svg";
 
 type LinksFormWrapperProps = {
   formId: string;
@@ -62,6 +65,7 @@ export const LinksFormWrapper = ({ children, formId, className }: LinksFormWrapp
           }
         }
       }
+      toast.success("Links updated successfully", { icon: <SaveIcon /> });
     });
   };
 

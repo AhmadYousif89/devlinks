@@ -29,8 +29,8 @@ export const LinksPreview = ({ inPreviewPage = false }: Props) => {
   return (
     <ul
       className={cn(
-        "col-end-1 row-end-1 flex w-full flex-col gap-5",
-        inPreviewPage ? "max-h-[600px] overflow-y-auto" : "",
+        "col-end-1 row-end-1 flex w-full flex-col gap-5 overflow-auto",
+        inPreviewPage ? "max-h-[600px]" : "",
       )}
     >
       {optimisticLinks.map((link) => {
