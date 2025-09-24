@@ -1,17 +1,17 @@
 "use client";
 
 import Form from "next/form";
+import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
-import { use, useActionState, useEffect, useMemo, useRef } from "react";
+import { useActionState, useEffect, useMemo, useRef } from "react";
 
 import SaveIcon from "public/assets/images/icon-changes-saved.svg";
 
-import { toast } from "sonner";
-import { UserProfileDisplay, UserSession } from "@/lib/types";
-import { updateProfile } from "@/app/(main)/actions/profile";
+import { updateProfile } from "../_actions/update";
 import { ProfileServerState } from "../../schema/profile.schema";
 
 import { ProfileInputFields } from "./input-fields";
+import { UserProfileDisplay, UserSession } from "@/lib/types";
 import { ImageFieldRef, ProfileImageField } from "./image-field";
 
 import { Spinner } from "@/components/icons/spinner";
@@ -25,12 +25,11 @@ const INTIAL_STATE: ProfileServerState = {
 };
 
 type ProfileDetailsProps = {
-  profileDataPromise: Promise<UserProfileDisplay | null>;
-  sessionPromise: Promise<UserSession | null>;
+  profileData: UserProfileDisplay | null;
+  session: UserSession | null;
 };
 
-export const ProfileDetails = ({ profileDataPromise, sessionPromise }: ProfileDetailsProps) => {
-  const session = use(sessionPromise);
+export const ProfileDetails = ({ profileData, session }: ProfileDetailsProps) => {
   const imageFieldRef = useRef<ImageFieldRef>(null);
   const [state, formAction, isPending] = useActionState(updateProfile, INTIAL_STATE);
   const searchParams = useSearchParams();
@@ -79,7 +78,7 @@ export const ProfileDetails = ({ profileDataPromise, sessionPromise }: ProfileDe
           isSubmitting={isPending}
           isMissingImage={highlightImage}
         />
-        <ProfileInputFields serverState={state} profileDataPromise={profileDataPromise} />
+        <ProfileInputFields serverState={state} profileData={profileData} />
       </div>
 
       <Form

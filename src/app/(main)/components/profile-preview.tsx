@@ -2,7 +2,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 
-import { getProfileData } from "../actions/profile";
+import { getProfileData } from "../@profileDetails/_dal/read.dal";
 import { ProfileInfoSkeleton } from "../skeletons/profile-info.skeleton";
 import { ProfileImageSkeleton } from "../skeletons/profile-image.skeleton";
 

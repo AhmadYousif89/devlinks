@@ -1,11 +1,10 @@
 import { getUserSession } from "@/app/(auth)/_lib/session";
-import { getProfileData } from "../actions/profile";
+import { getProfileData } from "../@profileDetails/_dal/read.dal";
 import { ProfileDetails } from "@/app/(main)/@profileDetails/_components/profile-details";
 
 export default async function ProfileDetailsSlot() {
-  // await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay for suspense
-  const profilePromise = getProfileData();
-  const sessionPromise = getUserSession();
+  const profile = await getProfileData();
+  const session = await getUserSession();
 
-  return <ProfileDetails profileDataPromise={profilePromise} sessionPromise={sessionPromise} />;
+  return <ProfileDetails profileData={profile} session={session} />;
 }

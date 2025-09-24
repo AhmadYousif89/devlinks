@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect, use } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 
 import { UserProfileDisplay } from "@/lib/types";
 import {
@@ -20,11 +20,10 @@ const initialFormData = (profileData: UserProfileDisplay | null) => ({
 
 type InputFieldsProps = {
   serverState: ProfileServerState;
-  profileDataPromise: Promise<UserProfileDisplay | null>;
+  profileData: UserProfileDisplay | null;
 };
 
-export const ProfileInputFields = ({ serverState, profileDataPromise }: InputFieldsProps) => {
-  const profileData = use(profileDataPromise);
+export const ProfileInputFields = ({ serverState, profileData }: InputFieldsProps) => {
   const [formData, setFormData] = useState(initialFormData(profileData));
 
   const inputRefs = useRef<Record<InputFieldNames, HTMLInputElement | null>>({

@@ -14,7 +14,7 @@ export const SidePanel = async () => {
       <PhoneMockup className="col-end-1 row-end-1" />
       <div className="col-end-1 row-end-1 flex flex-col items-center gap-14 pt-[63.5px] pr-[35.5px] pb-[56px] pl-[35.5px]">
         <ProfilePreview />
-        <ScrollArea className="max-h-[300px] w-full">
+        <ScrollArea className="h-[300px] w-full">
           <div className="grid">
             <ul className="col-end-1 row-end-1 flex flex-col gap-5">
               {Array.from({ length: 5 }).map((_, index) => (
