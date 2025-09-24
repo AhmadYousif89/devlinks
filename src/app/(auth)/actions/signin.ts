@@ -11,8 +11,8 @@ import { createUserSession } from "../_lib/session";
 
 import { SignInFormData, signInSchema } from "../schema/signIn-schema";
 import { AuthFormState } from "../_components/auth-compound-form";
-import { transferGuestLinksToUser } from "@/app/(main)/actions/links";
-import { transferGuestProfileToUser } from "@/app/(main)/actions/profile";
+
+import { transferGuestLinksToUser, transferGuestProfileToUser } from "./transfers";
 
 export async function loginUser(prevState: AuthFormState, formData: FormData) {
   const data: SignInFormData = {

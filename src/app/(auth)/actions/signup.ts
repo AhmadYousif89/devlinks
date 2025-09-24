@@ -11,8 +11,7 @@ import { hashPassword, generateSalt } from "../_lib/hasher";
 import { createUserSession } from "../_lib/session";
 import { signUpSchema, SignUpFormData } from "../schema/signUp-schema";
 import { AuthFormState } from "../_components/auth-compound-form";
-import { transferGuestLinksToUser } from "@/app/(main)/actions/links";
-import { transferGuestProfileToUser } from "@/app/(main)/actions/profile";
+import { transferGuestLinksToUser, transferGuestProfileToUser } from "./transfers";
 
 export async function createUserAccount(prevState: AuthFormState, formData: FormData) {
   const data = {
